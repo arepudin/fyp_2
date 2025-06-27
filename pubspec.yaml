@@ -38,6 +38,12 @@ dependencies:
   google_sign_in: ^6.3.0
   flutter_svg: ^2.2.0
 
+  # AR and Camera dependencies
+  arcore_flutter_plugin: ^0.1.0
+  camera: ^0.11.1
+  permission_handler: ^12.0.0+1
+  path_provider: ^2.1.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../widgets/home_page.dart';
+import 'profile_setup.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../constants/supabase.dart'; // Make sure this file initializes Supabase
 
 class GoogleSignInScreen extends StatefulWidget {
   const GoogleSignInScreen({super.key});
@@ -16,53 +16,113 @@ class GoogleSignInScreen extends StatefulWidget {
 class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
   bool _isLoading = false;
 
-  Future<void> _signInWithGoogle(BuildContext context) async {
-  final googleSignIn = GoogleSignIn(
-    scopes: [
-      'email',
-      'https://www.googleapis.com/auth/userinfo.profile', 
-    ],
-  );
+  Future<void> _checkAndNavigateUser(BuildContext context, User user) async {
+    try {
+      // Check if user has completed profile setup
+      final response = await Supabase.instance.client
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-  setState(() {
-    _isLoading = true;
-  });
-
-  try {
-    final googleUser = await googleSignIn.signIn();
-    if (googleUser == null) return; // User canceled
-
-    final googleAuth = await googleUser.authentication;
-    final accessToken = googleAuth.accessToken;
-    final idToken = googleAuth.idToken;
-
-    if (accessToken == null || idToken == null) {
-      throw Exception('Missing access or ID token.');
-    }
-
-    await supabase.auth.signInWithIdToken(
-      provider: OAuthProvider.google,
-      idToken: idToken,
-      accessToken: accessToken,
-    );
-
-    if (context.mounted) {
+      if (response == null) {
+        // User hasn't completed profile setup, navigate to profile setup
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfileSetupScreen()),
+        );
+      } else {
+        // User has completed profile setup, navigate to home page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomePage()),
+        );
+      }
+    } catch (error) {
+      debugPrint('Error checking user profile: $error');
+      // If there's an error, default to profile setup to be safe
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
+        MaterialPageRoute(builder: (_) => const ProfileSetupScreen()),
       );
     }
-  } catch (error) {
-    debugPrint("Google Sign-In Error: $error");
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Error signing in: $error")),
-    );
-  } finally {
-    setState(() {
-      _isLoading = false;
-    });
   }
-}
+
+  Future<void> _signInWithGoogle(BuildContext context) async {
+    final googleSignIn = GoogleSignIn(
+      serverClientId: '619873992295-gi2hlqn52e30r0dnkskq8th6qo12d1kr.apps.googleusercontent.com',
+      scopes: [
+        'email',
+        'profile',
+        'openid',
+      ],
+    );
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Clear any existing sign-in state
+      await googleSignIn.signOut();
+      
+      // Start the Google Sign-In flow
+      final googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        // User canceled the sign-in
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      debugPrint('Google User: ${googleUser.email}');
+
+      // Get the authentication tokens
+      final googleAuth = await googleUser.authentication;
+      
+      debugPrint('Access Token: ${googleAuth.accessToken != null ? 'Present' : 'Missing'}');
+      debugPrint('ID Token: ${googleAuth.idToken != null ? 'Present' : 'Missing'}');
+
+      final accessToken = googleAuth.accessToken;
+      final idToken = googleAuth.idToken;
+
+      if (accessToken == null || idToken == null) {
+        throw Exception('Failed to obtain Google authentication tokens. Please check your configuration.');
+      }
+
+      // Sign in to Supabase using the Google tokens
+      final response = await Supabase.instance.client.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: accessToken,
+      );
+
+      debugPrint('Supabase sign-in successful: ${response.user?.email}');
+
+      // Check if user has completed profile setup
+      if (context.mounted) {
+        await _checkAndNavigateUser(context, response.user!);
+      }
+    } catch (error) {
+      debugPrint("Google Sign-In Error: $error");
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error signing in: $error"),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
