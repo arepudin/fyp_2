@@ -1,6 +1,10 @@
+// File: profile_setup_screen.dart
+
 import 'package:flutter/material.dart';
-import '../constants/supabase.dart';
-import '../widgets/home_page.dart';
+import 'package:flutter_svg/svg.dart';
+import '../constants/supabase.dart'; // Make sure this path is correct
+import '../widgets/home_page.dart'; // Make sure this path is correct
+import './reminder.dart'; // Import the new reminder screen file
 
 class ProfileSetupScreen extends StatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -38,17 +42,34 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       final user = supabase.auth.currentUser;
       if (user == null) throw Exception('User not authenticated');
 
+      final fullName = _nameController.text.trim();
+      final phoneNumber = _phoneController.text.trim();
+      final address = _addressController.text.trim();
+
       // Save to user_profiles table
       await supabase.from('user_profiles').upsert({
         'user_id': user.id,
         'email': user.email,
-        'full_name': _nameController.text.trim(),
-        'phone_number': _phoneController.text.trim(),
-        'address': _addressController.text.trim(),
+        'full_name': fullName,
+        'phone_number': phoneNumber,
+        'address': address,
         'updated_at': DateTime.now().toIso8601String(),
       });
 
-      if (mounted) {
+      if (!mounted) return;
+
+      // Check if address is outside Selangor
+      final bool isOutsideSelangor =
+          !address.toLowerCase().contains('selangor');
+
+      if (isOutsideSelangor) {
+        // Navigate to the Reminder Screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ReminderScreen()),
+        );
+      } else {
+        // Navigate to the Home Page
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const HomePage()),
@@ -69,150 +90,117 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Complete Your Profile'),
-        backgroundColor: const Color.fromRGBO(36, 95, 117, 1),
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Tell us about yourself',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'We need some basic information to personalize your experience.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black54,
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                // Full Name Field
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Full Name',
-                    prefixIcon: const Icon(Icons.person),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SvgPicture.asset(
+                      'lib/asset/app_icon.svg',
+                      height: 180,
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color.fromRGBO(36, 95, 117, 1),
-                        width: 2,
+                    const SizedBox(height: 30),
+                    const Text(
+                      'Customer Details',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
                     ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your full name';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Phone Number Field
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: 'Phone Number',
-                    prefixIcon: const Icon(Icons.phone),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color.fromRGBO(36, 95, 117, 1),
-                        width: 2,
+                    const SizedBox(height: 24),
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        hintText: 'Name',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter your name';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your phone number';
-                    }
-                    if (value.trim().length < 10) {
-                      return 'Please enter a valid phone number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Address Field
-                TextFormField(
-                  controller: _addressController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: 'Address',
-                    prefixIcon: const Icon(Icons.location_on),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color.fromRGBO(36, 95, 117, 1),
-                        width: 2,
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: InputDecoration(
+                        hintText: 'phone number',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter your phone number';
+                        }
+                        if (value.trim().length < 10) {
+                          return 'Please enter a valid phone number';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your address';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 32),
-
-                // Save Button
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _saveProfile,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromRGBO(229, 64, 19, 1),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _addressController,
+                      decoration: InputDecoration(
+                        hintText: 'Address',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter your address';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text(
-                          'Complete Profile',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                    const SizedBox(height: 32),
+                    Align(
+                      alignment: Alignment.center,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _saveProfile,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFC86462),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 60),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Next',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

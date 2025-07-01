@@ -39,10 +39,12 @@ dependencies:
   flutter_svg: ^2.2.0
 
   # AR and Camera dependencies
-  arcore_flutter_plugin: ^0.1.0
   camera: ^0.11.1
   permission_handler: ^12.0.0+1
   path_provider: ^2.1.5
+
+  # app icon
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -71,6 +73,13 @@ flutter:
       - lib/asset/placeholder3.png
       - lib/asset/app_icon.svg
       - lib/asset/SABA CURTAIN LOGO.jpg
+
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  image_path: "lib/asset/app_icon.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "lib/asset/app_icon.png"
 
   # To add assets to your application, add an assets section, like this:
   # assets:
