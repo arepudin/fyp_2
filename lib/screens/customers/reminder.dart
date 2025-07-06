@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import '../widgets/home_page.dart'; // Make sure this path is correct
+import 'home_page.dart'; // Make sure this path is correct
 
 class ReminderScreen extends StatelessWidget {
   const ReminderScreen({super.key});

@@ -2,9 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import '../constants/supabase.dart'; // Make sure this path is correct
-import '../widgets/home_page.dart'; // Make sure this path is correct
-import './reminder.dart'; // Import the new reminder screen file
+import '../../constants/supabase.dart'; // Make sure this path is correct
+import 'home_page.dart'; // Make sure this path is correct
+import 'reminder.dart'; // Import the new reminder screen file
 
 class ProfileSetupScreen extends StatefulWidget {
   const ProfileSetupScreen({super.key});

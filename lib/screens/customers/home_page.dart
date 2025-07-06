@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../constants/supabase.dart';
-import '../screens/sign_in.dart';
-import '../screens/curtain_preference.dart';
-import '../screens/my_order.dart';
-import '../screens/setting.dart';
-import '../screens/support.dart';
+import '../../constants/supabase.dart';
+import '../sign_in.dart';
+import 'curtain_preference.dart';
+import 'my_order.dart';
+import 'support.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

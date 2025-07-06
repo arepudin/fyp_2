@@ -1,9 +1,9 @@
 // lib/screens/google_signin_screen.dart
 import 'package:flutter/material.dart';
+import 'package:fyp_2/screens/customers/splash.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import '../widgets/home_page.dart';
-import 'profile_setup.dart';
+import 'customers/profile_setup.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class GoogleSignInScreen extends StatefulWidget {
@@ -35,7 +35,7 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
         // User has completed profile setup, navigate to home page
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomePage()),
+          MaterialPageRoute(builder: (_) => const SplashScreen()),
         );
       }
     } catch (error) {
