@@ -3,6 +3,7 @@ import '../../constants/supabase.dart';
 import '../sign_in.dart';
 import 'curtain_preference.dart';
 import 'my_order.dart';
+import 'my_profile.dart';
 import 'support.dart';
 
 class HomePage extends StatefulWidget {
@@ -110,8 +111,7 @@ class _HomePageState extends State<HomePage> {
               // Secondary Action Cards
               _buildSecondaryActionGrid(context),
               
-              // Profile Details Expansion Tile
-              _buildProfileDetails(),
+              // 4. REMOVED the profile details ExpansionTile from here
 
             ],
           ),
@@ -166,13 +166,13 @@ class _HomePageState extends State<HomePage> {
           color: primaryRed,
           borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
-            colors: [primaryRed, primaryRed.withOpacity(0.8)],
+            colors: [primaryRed, primaryRed.withAlpha(204)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           boxShadow: [
             BoxShadow(
-              color: primaryRed.withOpacity(0.3),
+              color: primaryRed.withAlpha(75),
               blurRadius: 15,
               offset: const Offset(0, 8),
             )
@@ -233,6 +233,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // 2. UPDATED THIS METHOD
   Widget _buildSecondaryActionGrid(BuildContext context) {
     return GridView.count(
       shrinkWrap: true,
@@ -247,7 +248,6 @@ class _HomePageState extends State<HomePage> {
           icon: Icons.shopping_cart_outlined,
           title: 'My Orders',
           onTap: () {
-            // Navigate to the My Orders screen
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const MyOrdersScreen()),
@@ -260,13 +260,17 @@ class _HomePageState extends State<HomePage> {
           onTap: () { /* TODO: Navigate to Measurement Guide Page */ },
         ),
         _buildActionCard(
-          icon: Icons.settings_outlined,
-          title: 'Settings',
+          icon: Icons.person_outline,
+          title: 'My Profile',
           onTap: () {
-            /*Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
-            );*/
+            if (userProfile != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MyProfilePage(userProfile: userProfile!),
+                ),
+              );
+            }
           },
         ),
         _buildActionCard(
@@ -292,7 +296,6 @@ class _HomePageState extends State<HomePage> {
         color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          // side: BorderSide(color: Colors.grey.shade200),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -306,65 +309,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildProfileDetails() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-      child: Theme(
-        // Override the divider color to be transparent
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 8.0),
-          leading: const Icon(Icons.person_outline, color: primaryRed),
-          title: const Text(
-            'My Profile Information',
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12)
-              ),
-              child: Column(
-                children: [
-                  _buildInfoRow(Icons.email_outlined, 'Email', userProfile?['email']),
-                  _buildInfoRow(Icons.phone_outlined, 'Phone', userProfile?['phone_number']),
-                  _buildInfoRow(Icons.location_on_outlined, 'Address', userProfile?['address']),
-                ],
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String? value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: Colors.grey, size: 20),
-          const SizedBox(width: 16),
-          Text(
-            '$label: ',
-            style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.black54),
-          ),
-          Expanded(
-            child: Text(
-              value ?? 'Not provided',
-              style: const TextStyle(
-                color: Colors.black,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

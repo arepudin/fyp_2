@@ -226,10 +226,11 @@ class _RecommendationCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 gradient: LinearGradient(
                   colors: [
-                    Colors.black.withOpacity(0.4), 
+                    // FIX: Replaced withOpacity with withAlpha
+                    Colors.black.withAlpha(102), // 0.4 opacity
                     Colors.transparent, 
                     Colors.transparent, 
-                    Colors.black.withOpacity(0.8)
+                    Colors.black.withAlpha(204)  // 0.8 opacity
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -255,7 +256,8 @@ class _RecommendationCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12), 
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.5), 
+                        // FIX: Replaced withOpacity with withAlpha
+                        color: Colors.black.withAlpha(128), // 0.5 opacity
                         blurRadius: 4
                       )
                     ]
@@ -288,7 +290,8 @@ class _RecommendationCard extends StatelessWidget {
                     onPressed: onFindSimilar,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
-                      backgroundColor: Colors.black.withOpacity(0.3),
+                      // FIX: Replaced withOpacity with withAlpha
+                      backgroundColor: Colors.black.withAlpha(77), // 0.3 opacity
                       side: const BorderSide(color: Colors.white70),
                       visualDensity: VisualDensity.compact,
                       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -386,7 +389,8 @@ class _RecommendationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.6),
+        // FIX: Replaced withOpacity with withAlpha
+        color: Colors.black.withAlpha(153), // 0.6 opacity
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -424,7 +428,7 @@ class _RecommendationCard extends StatelessWidget {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
@@ -454,7 +458,8 @@ class _RecommendationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.4), 
+        // FIX: Replaced withOpacity with withAlpha
+        color: Colors.black.withAlpha(102), // 0.4 opacity
         borderRadius: BorderRadius.circular(8)
       ),
       child: Text(
