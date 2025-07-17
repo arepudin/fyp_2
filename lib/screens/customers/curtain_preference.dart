@@ -23,7 +23,6 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
   late String _selectedMaterial;
   late String _selectedLightControl;
   late String _selectedRoomType;
-  late String _selectedStyle;
   bool _isLoading = false;
 
 
@@ -34,24 +33,21 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
     'material': false,
     'lightControl': false,
     'roomType': false,
-    'style': false,
   };
 
   // --- NEW: Category weights for content-based filtering ---
   final Map<String, double> _categoryWeights = {
-    'pattern': 0.2,
-    'material': 0.25,
-    'lightControl': 0.25,
+    'pattern': 0.25,
+    'material': 0.3,
+    'lightControl': 0.3,
     'roomType': 0.15,
-    'style': 0.15,
   };
 
   // --- Preference Options ---
-  final List<String> _patterns = ['Textured', 'Pebbled', 'Twill', 'Crackled', 'Striated', 'Dobby'];
+  final List<String> _patterns = ['Stripes', 'Solid/Plain', 'Geometric', 'Floral', 'Damask', 'Polka Dots'];
   final List<String> _materials = ['Cotton', 'Linen', 'Velvet', 'Sheer', 'Polyester'];
-  final List<String> _lightControls = ['Blackout', 'Room Darkening', 'Light Filtering'];
+  final List<String> _lightControls = ['Blackout', 'Dimout', 'Light Filtering'];
   final List<String> _roomTypes = ['Living Room', 'Bedroom', 'Kitchen', 'Office'];
-  final List<String> _styles = ['Modern', 'Traditional', 'Minimalist'];
 
   // --- NEW: Content-based recommendation engine ---
   final ContentBasedRecommendationEngine _recommendationEngine = ContentBasedRecommendationEngine();
@@ -66,7 +62,6 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
     _selectedMaterial = _materials.first;
     _selectedLightControl = _lightControls.first;
     _selectedRoomType = _roomTypes.first;
-    _selectedStyle = _styles.first;
 
     // If initial preferences were passed, override the defaults
     if (prefs != null) {
@@ -74,7 +69,6 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
       _selectedMaterial = prefs['material'] ?? _selectedMaterial;
       _selectedLightControl = prefs['light_control'] ?? _selectedLightControl;
       _selectedRoomType = prefs['room_type'] ?? _selectedRoomType;
-      _selectedStyle = prefs['style'] ?? _selectedStyle;
     }
   }
   
@@ -94,7 +88,6 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
         'material': _selectedMaterial,
         'light_control': _selectedLightControl,
         'room_type': _selectedRoomType,
-        'style': _selectedStyle,
       };
 
       // Use content-based filtering
@@ -169,10 +162,6 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
         'roomType': _recommendationEngine.calculateRoomTypeSimilarity(
           userPreferences['room_type'], 
           curtain.roomType
-        ),
-        'style': _recommendationEngine.calculateStyleSimilarity(
-          userPreferences['style'], 
-          curtain.style
         ),
       };
 
@@ -270,17 +259,6 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
               onToggleMustHave: () => _toggleMustHave('roomType'),
               weight: _categoryWeights['roomType']!,
               onWeightChanged: (weight) => _updateCategoryWeight('roomType', weight),
-            ),
-            const SizedBox(height: 30),
-            _PreferenceSelector(
-              title: 'Style',
-              options: _styles,
-              selectedValue: _selectedStyle,
-              onSelected: (value) => setState(() => _selectedStyle = value),
-              isMustHave: _mustHaves['style']!,
-              onToggleMustHave: () => _toggleMustHave('style'),
-              weight: _categoryWeights['style']!,
-              onWeightChanged: (weight) => _updateCategoryWeight('style', weight),
             ),
             const SizedBox(height: 50),
             

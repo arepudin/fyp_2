@@ -27,9 +27,6 @@ class ContentBasedRecommendationEngine {
     // Room Type features
     vector.addAll(_encodeRoomType(preferences['room_type'] ?? ''));
     
-    // Style features
-    vector.addAll(_encodeStyle(preferences['style'] ?? ''));
-    
     return vector;
   }
   
@@ -41,7 +38,6 @@ class ContentBasedRecommendationEngine {
     vector.addAll(_encodeMaterial(curtain.material));
     vector.addAll(_encodeLightControl(curtain.lightControl));
     vector.addAll(_encodeRoomType(curtain.roomType));
-    vector.addAll(_encodeStyle(curtain.style));
     
     return vector;
   }
@@ -51,35 +47,41 @@ class ContentBasedRecommendationEngine {
     Map<String, double> features = {};
     
     switch (pattern.toLowerCase()) {
-      case 'textured':
-        features['pattern_textured'] = 1.0;
-        features['pattern_complexity'] = 0.8;
-        features['pattern_geometric'] = 0.3;
-        break;
-      case 'pebbled':
-        features['pattern_pebbled'] = 1.0;
-        features['pattern_textured'] = 0.7;
-        features['pattern_complexity'] = 0.6;
-        break;
-      case 'twill':
-        features['pattern_twill'] = 1.0;
-        features['pattern_structured'] = 0.8;
+      case 'stripes':
+        features['pattern_stripes'] = 1.0;
+        features['pattern_linear'] = 0.9;
+        features['pattern_geometric'] = 0.7;
         features['pattern_complexity'] = 0.4;
         break;
-      case 'crackled':
-        features['pattern_crackled'] = 1.0;
-        features['pattern_textured'] = 0.6;
-        features['pattern_complexity'] = 0.7;
+      case 'solid/plain':
+        features['pattern_solid'] = 1.0;
+        features['pattern_plain'] = 1.0;
+        features['pattern_minimal'] = 1.0;
+        features['pattern_complexity'] = 0.1;
         break;
-      case 'striated':
-        features['pattern_striated'] = 1.0;
-        features['pattern_linear'] = 0.8;
-        features['pattern_complexity'] = 0.5;
-        break;
-      case 'dobby':
-        features['pattern_dobby'] = 1.0;
-        features['pattern_geometric'] = 0.7;
+      case 'geometric':
+        features['pattern_geometric'] = 1.0;
+        features['pattern_structured'] = 0.8;
+        features['pattern_modern'] = 0.7;
         features['pattern_complexity'] = 0.6;
+        break;
+      case 'floral':
+        features['pattern_floral'] = 1.0;
+        features['pattern_organic'] = 0.9;
+        features['pattern_traditional'] = 0.7;
+        features['pattern_complexity'] = 0.8;
+        break;
+      case 'damask':
+        features['pattern_damask'] = 1.0;
+        features['pattern_ornate'] = 0.9;
+        features['pattern_traditional'] = 0.8;
+        features['pattern_complexity'] = 0.9;
+        break;
+      case 'polka dots':
+        features['pattern_polka_dots'] = 1.0;
+        features['pattern_playful'] = 0.8;
+        features['pattern_circular'] = 0.7;
+        features['pattern_complexity'] = 0.5;
         break;
       default:
         features['pattern_unknown'] = 1.0;
@@ -141,8 +143,8 @@ class ContentBasedRecommendationEngine {
         features['light_privacy'] = 1.0;
         features['light_darkness'] = 1.0;
         break;
-      case 'room darkening':
-        features['light_room_darkening'] = 1.0;
+      case 'dimout':
+        features['light_dimout'] = 1.0;
         features['light_blocking'] = 0.8;
         features['light_privacy'] = 0.9;
         features['light_darkness'] = 0.8;
@@ -191,36 +193,6 @@ class ContentBasedRecommendationEngine {
         break;
       default:
         features['room_unknown'] = 1.0;
-    }
-    
-    return features;
-  }
-  
-  /// Encode styles with aesthetic weights
-  Map<String, double> _encodeStyle(String style) {
-    Map<String, double> features = {};
-    
-    switch (style.toLowerCase()) {
-      case 'modern':
-        features['style_modern'] = 1.0;
-        features['style_clean'] = 1.0;
-        features['style_minimalist'] = 0.8;
-        features['style_geometric'] = 0.7;
-        break;
-      case 'traditional':
-        features['style_traditional'] = 1.0;
-        features['style_classic'] = 1.0;
-        features['style_ornate'] = 0.8;
-        features['style_formal'] = 0.7;
-        break;
-      case 'minimalist':
-        features['style_minimalist'] = 1.0;
-        features['style_simple'] = 1.0;
-        features['style_clean'] = 0.9;
-        features['style_modern'] = 0.8;
-        break;
-      default:
-        features['style_unknown'] = 1.0;
     }
     
     return features;
@@ -323,22 +295,6 @@ class ContentBasedRecommendationEngine {
     }
     totalWeight += categoryWeights['roomType']!;
     
-    // Style score
-    if (mustHaves['style'] == true) {
-      if (curtain.style == userPreferences['style']) {
-        totalScore += 1.0 * categoryWeights['style']!;
-      } else {
-        return 0.0; // Must-have not met
-      }
-    } else {
-      double styleSimilarity = calculateStyleSimilarity(
-        userPreferences['style'], 
-        curtain.style
-      );
-      totalScore += styleSimilarity * categoryWeights['style']!;
-    }
-    totalWeight += categoryWeights['style']!;
-    
     return totalScore / totalWeight;
   }
   
@@ -348,12 +304,12 @@ class ContentBasedRecommendationEngine {
     
     // Define pattern similarity matrix
     const Map<String, Map<String, double>> patternSimilarity = {
-      'textured': {'pebbled': 0.7, 'crackled': 0.6, 'dobby': 0.3},
-      'pebbled': {'textured': 0.7, 'crackled': 0.5, 'dobby': 0.2},
-      'twill': {'dobby': 0.6, 'striated': 0.4},
-      'crackled': {'textured': 0.6, 'pebbled': 0.5},
-      'striated': {'twill': 0.4, 'dobby': 0.3},
-      'dobby': {'twill': 0.6, 'textured': 0.3, 'striated': 0.3},
+      'stripes': {'geometric': 0.6, 'solid/plain': 0.3},
+      'solid/plain': {'stripes': 0.3, 'geometric': 0.4},
+      'geometric': {'stripes': 0.6, 'damask': 0.5, 'polka dots': 0.4},
+      'floral': {'damask': 0.7, 'polka dots': 0.3},
+      'damask': {'floral': 0.7, 'geometric': 0.5},
+      'polka dots': {'geometric': 0.4, 'floral': 0.3},
     };
     
     return patternSimilarity[pattern1.toLowerCase()]?[pattern2.toLowerCase()] ?? 0.0;
@@ -379,9 +335,9 @@ class ContentBasedRecommendationEngine {
     if (light1 == light2) return 1.0;
     
     const Map<String, Map<String, double>> lightSimilarity = {
-      'blackout': {'room darkening': 0.8},
-      'room darkening': {'blackout': 0.8, 'light filtering': 0.4},
-      'light filtering': {'room darkening': 0.4},
+      'blackout': {'dimout': 0.8},
+      'dimout': {'blackout': 0.8, 'light filtering': 0.4},
+      'light filtering': {'dimout': 0.4},
     };
     
     return lightSimilarity[light1.toLowerCase()]?[light2.toLowerCase()] ?? 0.0;
@@ -399,18 +355,5 @@ class ContentBasedRecommendationEngine {
     };
     
     return roomSimilarity[room1.toLowerCase()]?[room2.toLowerCase()] ?? 0.0;
-  }
-  
-  /// PUBLIC: Calculate style similarity
-  double calculateStyleSimilarity(String style1, String style2) {
-    if (style1 == style2) return 1.0;
-    
-    const Map<String, Map<String, double>> styleSimilarity = {
-      'modern': {'minimalist': 0.8},
-      'traditional': {'modern': 0.2},
-      'minimalist': {'modern': 0.8},
-    };
-    
-    return styleSimilarity[style1.toLowerCase()]?[style2.toLowerCase()] ?? 0.0;
   }
 }
