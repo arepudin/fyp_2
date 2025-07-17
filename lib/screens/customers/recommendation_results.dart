@@ -266,7 +266,7 @@ class _RecommendationCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        hasDetailedScores ? Icons.smart_toy : Icons.rule,
+                        hasDetailedScores ? Icons.smart_toy : Icons.analytics,
                         color: Colors.white,
                         size: 16,
                       ),
