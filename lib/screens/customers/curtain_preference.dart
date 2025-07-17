@@ -26,8 +26,7 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
   late String _selectedStyle;
   bool _isLoading = false;
 
-  // --- NEW: Content-based filtering toggle ---
-  bool _useContentBasedFiltering = true;
+
 
   // --- NEW: State for "Must-Haves" ---
   final Map<String, bool> _mustHaves = {
@@ -98,21 +97,11 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
         'style': _selectedStyle,
       };
 
-      List<ScoredRecommendation> scoredCurtains;
-
-      if (_useContentBasedFiltering) {
-        // Use content-based filtering
-        scoredCurtains = await _generateContentBasedRecommendations(
-          allCurtains, 
-          userPreferences
-        );
-      } else {
-        // Use original rule-based algorithm
-        scoredCurtains = _generateRuleBasedRecommendations(
-          allCurtains, 
-          userPreferences
-        );
-      }
+      // Use content-based filtering
+      final List<ScoredRecommendation> scoredCurtains = await _generateContentBasedRecommendations(
+        allCurtains, 
+        userPreferences
+      );
 
       // Track the search
       await UserInteractionService.trackSearch(userPreferences, scoredCurtains.length);
@@ -202,95 +191,7 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
     return scoredCurtains;
   }
 
-  /// Original rule-based recommendation algorithm (kept for comparison)
-  List<ScoredRecommendation> _generateRuleBasedRecommendations(
-    List<Curtain> allCurtains,
-    Map<String, dynamic> userPreferences,
-  ) {
-    // Define weights for scoring
-    const int mustHaveScore = 10;
-    const int regularScore = 2;
-    
-    // Calculate the maximum possible score based on selections
-    final int maxPossibleScore = 
-        (_mustHaves['pattern']! ? mustHaveScore : regularScore) +
-        (_mustHaves['material']! ? mustHaveScore : regularScore) +
-        (_mustHaves['lightControl']! ? mustHaveScore : regularScore) +
-        (_mustHaves['roomType']! ? mustHaveScore : regularScore) +
-        (_mustHaves['style']! ? mustHaveScore : regularScore);
 
-    final scoredCurtains = <ScoredRecommendation>[];
-
-    for (final curtain in allCurtains) {
-      int currentScore = 0;
-      bool meetsAllMustHaves = true;
-
-      // Check Pattern
-      if (_mustHaves['pattern']!) {
-        if (curtain.designPattern != userPreferences['design_pattern']) {
-          meetsAllMustHaves = false;
-        } else {
-          currentScore += mustHaveScore;
-        }
-      } else if (curtain.designPattern == userPreferences['design_pattern']) {
-        currentScore += regularScore;
-      }
-      
-      // Check Material
-      if (_mustHaves['material']!) {
-        if (curtain.material != userPreferences['material']) {
-          meetsAllMustHaves = false;
-        } else {
-          currentScore += mustHaveScore;
-        }
-      } else if (curtain.material == userPreferences['material']) {
-        currentScore += regularScore;
-      }
-
-      // Check Light Control
-      if (_mustHaves['lightControl']!) {
-        if (curtain.lightControl != userPreferences['light_control']) {
-          meetsAllMustHaves = false;
-        } else {
-          currentScore += mustHaveScore;
-        }
-      } else if (curtain.lightControl == userPreferences['light_control']) {
-        currentScore += regularScore;
-      }
-
-      // Check Room Type
-      if (_mustHaves['roomType']!) {
-        if (curtain.roomType != userPreferences['room_type']) {
-          meetsAllMustHaves = false;
-        } else {
-          currentScore += mustHaveScore;
-        }
-      } else if (curtain.roomType == userPreferences['room_type']) {
-        currentScore += regularScore;
-      }
-      
-      // Check Style
-      if (_mustHaves['style']!) {
-        if (curtain.style != userPreferences['style']) {
-          meetsAllMustHaves = false;
-        } else {
-          currentScore += mustHaveScore;
-        }
-      } else if (curtain.style == userPreferences['style']) {
-        currentScore += regularScore;
-      }
-      
-      if (meetsAllMustHaves && currentScore > 0) {
-        scoredCurtains.add(ScoredRecommendation(
-          score: currentScore,
-          curtain: curtain,
-          maxPossibleScore: maxPossibleScore,
-        ));
-      }
-    }
-
-    return scoredCurtains;
-  }
 
   void _toggleMustHave(String category) {
     setState(() {
@@ -313,25 +214,6 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
-        actions: [
-          // NEW: Algorithm toggle button
-          IconButton(
-            icon: Icon(_useContentBasedFiltering ? Icons.smart_toy : Icons.rule),
-            onPressed: () {
-              setState(() {
-                _useContentBasedFiltering = !_useContentBasedFiltering;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(_useContentBasedFiltering 
-                    ? 'Switched to Content-Based Filtering' 
-                    : 'Switched to Rule-Based Filtering'),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            },
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -340,27 +222,9 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
           children: [
             const Text('Tell us your style.', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Select your preferences. Tap the star to mark a "Must-Have".',
-                    style: TextStyle(fontSize: 16, color: Colors.black54),
-                  ),
-                ),
-                // NEW: Algorithm indicator
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _useContentBasedFiltering ? Colors.blue : Colors.orange,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _useContentBasedFiltering ? 'Smart' : 'Basic',
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
-                  ),
-                ),
-              ],
+            Text(
+              'Select your preferences. Tap the star to mark a "Must-Have".',
+              style: TextStyle(fontSize: 16, color: Colors.black54),
             ),
             const SizedBox(height: 40),
 
@@ -372,7 +236,7 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
               isMustHave: _mustHaves['pattern']!,
               onToggleMustHave: () => _toggleMustHave('pattern'),
               weight: _categoryWeights['pattern']!,
-              onWeightChanged: _useContentBasedFiltering ? (weight) => _updateCategoryWeight('pattern', weight) : null,
+              onWeightChanged: (weight) => _updateCategoryWeight('pattern', weight),
             ),
             const SizedBox(height: 30),
             _PreferenceSelector(
@@ -383,7 +247,7 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
               isMustHave: _mustHaves['material']!,
               onToggleMustHave: () => _toggleMustHave('material'),
               weight: _categoryWeights['material']!,
-              onWeightChanged: _useContentBasedFiltering ? (weight) => _updateCategoryWeight('material', weight) : null,
+              onWeightChanged: (weight) => _updateCategoryWeight('material', weight),
             ),
             const SizedBox(height: 30),
             _PreferenceSelector(
@@ -394,7 +258,7 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
               isMustHave: _mustHaves['lightControl']!,
               onToggleMustHave: () => _toggleMustHave('lightControl'),
               weight: _categoryWeights['lightControl']!,
-              onWeightChanged: _useContentBasedFiltering ? (weight) => _updateCategoryWeight('lightControl', weight) : null,
+              onWeightChanged: (weight) => _updateCategoryWeight('lightControl', weight),
             ),
             const SizedBox(height: 30),
             _PreferenceSelector(
@@ -405,7 +269,7 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
               isMustHave: _mustHaves['roomType']!,
               onToggleMustHave: () => _toggleMustHave('roomType'),
               weight: _categoryWeights['roomType']!,
-              onWeightChanged: _useContentBasedFiltering ? (weight) => _updateCategoryWeight('roomType', weight) : null,
+              onWeightChanged: (weight) => _updateCategoryWeight('roomType', weight),
             ),
             const SizedBox(height: 30),
             _PreferenceSelector(
@@ -416,7 +280,7 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
               isMustHave: _mustHaves['style']!,
               onToggleMustHave: () => _toggleMustHave('style'),
               weight: _categoryWeights['style']!,
-              onWeightChanged: _useContentBasedFiltering ? (weight) => _updateCategoryWeight('style', weight) : null,
+              onWeightChanged: (weight) => _updateCategoryWeight('style', weight),
             ),
             const SizedBox(height: 50),
             
@@ -429,9 +293,9 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
               ),
               child: _isLoading
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : Text(
-                      _useContentBasedFiltering ? 'FIND MY CURTAINS (SMART)' : 'FIND MY CURTAINS (BASIC)',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  : const Text(
+                      'FIND MY CURTAINS',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
             ),
           ],
@@ -450,7 +314,7 @@ class _PreferenceSelector extends StatelessWidget {
   final bool isMustHave;
   final VoidCallback onToggleMustHave;
   final double weight;
-  final ValueChanged<double>? onWeightChanged;
+  final ValueChanged<double> onWeightChanged;
 
   const _PreferenceSelector({
     required this.title,
@@ -460,7 +324,7 @@ class _PreferenceSelector extends StatelessWidget {
     required this.isMustHave,
     required this.onToggleMustHave,
     required this.weight,
-    this.onWeightChanged,
+    required this.onWeightChanged,
   });
 
   @override
@@ -474,19 +338,18 @@ class _PreferenceSelector extends StatelessWidget {
             Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             Row(
               children: [
-                // NEW: Weight indicator for content-based filtering
-                if (onWeightChanged != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${(weight * 100).round()}%',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                    ),
+                // Weight indicator for content-based filtering
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(8),
                   ),
+                  child: Text(
+                    '${(weight * 100).round()}%',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                  ),
+                ),
                 const SizedBox(width: 8),
                 IconButton(
                   icon: Icon(isMustHave ? Icons.star : Icons.star_border, color: isMustHave ? Colors.amber[600] : Colors.grey),
@@ -498,17 +361,16 @@ class _PreferenceSelector extends StatelessWidget {
           ],
         ),
         
-        // NEW: Weight slider for content-based filtering
-        if (onWeightChanged != null)
-          Slider(
-            value: weight,
-            min: 0.0,
-            max: 1.0,
-            divisions: 20,
-            label: '${(weight * 100).round()}%',
-            onChanged: onWeightChanged,
-            activeColor: const Color.fromARGB(255, 158, 19, 17),
-          ),
+        // Weight slider for content-based filtering
+        Slider(
+          value: weight,
+          min: 0.0,
+          max: 1.0,
+          divisions: 20,
+          label: '${(weight * 100).round()}%',
+          onChanged: onWeightChanged,
+          activeColor: const Color.fromARGB(255, 158, 19, 17),
+        ),
         
         const SizedBox(height: 4),
         SingleChildScrollView(
