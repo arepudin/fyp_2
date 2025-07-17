@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../models/curtain_model.dart';
 import '../../models/recommendation_model.dart';
 import '../../services/cbf_engine.dart';
-import '../../services/user_interaction.dart'; // Added import
+import '../../services/user_interaction.dart';
 import 'recommendation_results.dart';
 import '../../constants/supabase.dart';
 
@@ -98,7 +98,7 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
       };
 
       // Use content-based filtering
-      final List<ScoredRecommendation> scoredCurtains = await _generateContentBasedRecommendations(
+      List<ScoredRecommendation> scoredCurtains = await _generateContentBasedRecommendations(
         allCurtains, 
         userPreferences
       );
