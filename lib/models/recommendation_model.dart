@@ -4,8 +4,8 @@ class ScoredRecommendation {
   final Curtain curtain;
   final int score;
   final int maxPossibleScore;
-  final double similarityScore; // New field for content-based similarity
-  final Map<String, double> categoryScores; // New field for breakdown
+  final double similarityScore; // Content-based similarity score
+  final Map<String, double> categoryScores; // Category breakdown
 
   ScoredRecommendation({
     required this.curtain,
@@ -15,16 +15,9 @@ class ScoredRecommendation {
     this.categoryScores = const {},
   });
   
-  /// Calculate match percentage
-  int get matchPercentage => maxPossibleScore > 0 
-      ? ((score / maxPossibleScore) * 100).round()
-      : 0;
-  
-  /// Get similarity percentage
+  /// Get similarity percentage from content-based filtering
   int get similarityPercentage => (similarityScore * 100).round();
   
-  /// Get the higher of the two scores for display
-  int get displayScore => similarityPercentage > matchPercentage 
-      ? similarityPercentage 
-      : matchPercentage;
+  /// Display score is now always the similarity percentage
+  int get displayScore => similarityPercentage;
 }
