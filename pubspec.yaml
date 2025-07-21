@@ -42,6 +42,8 @@ dependencies:
   camera: ^0.11.1
   permission_handler: ^12.0.0+1
   path_provider: ^2.1.5
+  arcore_flutter_plugin: ^0.0.8
+  vector_math: ^2.1.4
 
   # app icon
   flutter_launcher_icons: ^0.14.4
@@ -77,6 +79,10 @@ flutter:
       - lib/asset/placeholder3.png
       - lib/asset/app_icon.svg
       - lib/asset/SABA CURTAIN LOGO.jpg
+      - lib/asset/measurement_tools.png
+      - lib/asset/measure_width.png
+      - lib/asset/measure_height.png
+      - lib/asset/record_measurements.png
 
 
 flutter_launcher_icons:
