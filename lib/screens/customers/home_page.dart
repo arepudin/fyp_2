@@ -5,6 +5,10 @@ import 'curtain_preference.dart';
 import 'my_order.dart';
 import 'my_profile.dart';
 import 'support.dart';
+import '../measurement/ar_measurement_screen.dart';
+import '../measurement/measurement_guide_screen.dart';
+import '../../utils/ar_utils.dart';
+import '../../models/measurement_result.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -71,6 +75,124 @@ class _HomePageState extends State<HomePage> {
         );
       }
     }
+  }
+
+  Future<void> _navigateToMeasurement() async {
+    // Check if AR is supported
+    final isARSupported = await ARUtils.isARCoreSupported();
+    final hasPermission = await ARUtils.requestCameraPermission();
+
+    if (!mounted) return;
+
+    if (isARSupported && hasPermission) {
+      // Show choice dialog
+      _showMeasurementOptions();
+    } else {
+      // Go directly to manual guide
+      _navigateToManualGuide();
+    }
+  }
+
+  void _showMeasurementOptions() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Choose Measurement Method'),
+          content: const Text('How would you like to measure your window?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _navigateToManualGuide();
+              },
+              child: const Text('Manual Guide'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _navigateToARMeasurement();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryRed,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('AR Measurement'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _navigateToARMeasurement() async {
+    final result = await Navigator.push<MeasurementResult>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ARMeasurementScreen(),
+      ),
+    );
+
+    if (result != null && mounted) {
+      _showMeasurementResult(result);
+    }
+  }
+
+  void _navigateToManualGuide() async {
+    final result = await Navigator.push<MeasurementResult>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const MeasurementGuideScreen(),
+      ),
+    );
+
+    if (result != null && mounted) {
+      _showMeasurementResult(result);
+    }
+  }
+
+  void _showMeasurementResult(MeasurementResult result) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Measurement Saved'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Width: ${result.formattedWidth}'),
+              Text('Height: ${result.formattedHeight}'),
+              Text('Area: ${result.formattedArea}'),
+              const SizedBox(height: 16),
+              const Text(
+                'Your measurements have been saved and will be used for curtain recommendations.',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Navigate to curtain preference with measurements
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CurtainPreferenceScreen(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryRed,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Continue to Design'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -257,7 +379,7 @@ class _HomePageState extends State<HomePage> {
         _buildActionCard(
           icon: Icons.straighten_outlined,
           title: 'Measure Guide',
-          onTap: () { /* TODO: Navigate to Measurement Guide Page */ },
+          onTap: () => _navigateToMeasurement(),
         ),
         _buildActionCard(
           icon: Icons.person_outline,
