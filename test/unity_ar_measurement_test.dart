@@ -28,6 +28,20 @@ void main() {
       // Should not crash and provide fallback info
       expect(capabilityInfo, isNotNull);
       expect(capabilityInfo.requirements, isNotEmpty);
+      expect(capabilityInfo.isAvailable, isFalse); // In test environment
+    });
+
+    test('ARMeasurementService handles initialization gracefully', () {
+      final service = ARMeasurementService();
+      
+      // Should not crash when creating service
+      expect(service, isNotNull);
+      expect(service.isInitialized, isFalse);
+      expect(service.placedPoints, isEmpty);
+      expect(service.canMeasure, isFalse);
+      
+      // Test cleanup
+      service.dispose();
     });
     
     test('WindowMeasurement storage format conversion works', () {

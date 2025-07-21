@@ -80,7 +80,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
       setState(() => _isLoading = false);
     } catch (e) {
       setState(() {
-        _errorMessage = 'Failed to initialize AR: $e';
+        _errorMessage = 'Failed to initialize Unity AR: $e';
         _isLoading = false;
       });
     }
@@ -234,7 +234,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
             ),
             const SizedBox(height: 20),
             const Text(
-              'AR Not Available',
+              'Unity AR Not Available',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -243,7 +243,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              _errorMessage ?? 'AR functionality is not available on this device.',
+              _errorMessage ?? 'Unity AR functionality is not available on this device.',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 16,

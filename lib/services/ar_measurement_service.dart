@@ -88,12 +88,17 @@ class ARMeasurementService {
       // Set up method channel for Unity communication
       _methodChannel.setMethodCallHandler(_handleUnityMessage);
       
-      // Initialize Unity AR scene
-      await _sendToUnity('InitializeAR', {
-        'planeDetection': true,
-        'pointCloud': true,
-        'lightEstimation': true,
-      });
+      // Initialize Unity AR scene with error handling
+      try {
+        await _sendToUnity('InitializeAR', {
+          'planeDetection': true,
+          'pointCloud': true,
+          'lightEstimation': true,
+        });
+      } catch (unityError) {
+        print('Unity initialization failed: $unityError');
+        // Continue with limited functionality
+      }
       
       _isInitialized = true;
       return true;
@@ -171,6 +176,7 @@ class ARMeasurementService {
       return result['isSupported'] ?? false;
     } catch (e) {
       print('Unity AR availability check failed: $e');
+      // Return false instead of crashing when Unity is not available
       return false;
     }
   }
