@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:arcore_flutter_plugin/arcore_flutter_plugin.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter_unity_widget/flutter_unity_widget.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 import '../../services/ar_measurement_service.dart';
 import '../../utils/measurement_utils.dart';
@@ -18,7 +20,7 @@ class ARMeasurementScreen extends StatefulWidget {
 }
 
 class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
-  ArCoreController? _arCoreController;
+  UnityWidgetController? _unityController;
   ARMeasurementService? _measurementService;
   bool _isLoading = true;
   String? _errorMessage;
@@ -37,7 +39,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
   @override
   void dispose() {
     _measurementService?.dispose();
-    _arCoreController?.dispose();
+    _unityController?.dispose();
     super.dispose();
   }
 
@@ -84,17 +86,14 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
     }
   }
 
-  void _onArCoreViewCreated(ArCoreController controller) {
-    _arCoreController = controller;
+  void _onUnityCreated(UnityWidgetController controller) {
+    _unityController = controller;
     _measurementService?.initialize(controller);
-    
-    controller.onPlaneTap = _onPlaneTapped;
   }
 
-  void _onPlaneTapped(List<ArCoreHitTestResult> hits) {
-    if (hits.isNotEmpty && _placedPoints.length < 4) {
-      final hit = hits.first;
-      _measurementService?.placePoint(vector.Vector2(0, 0)); // Simplified for demo
+  void _onUnityTap(vector.Vector2 position) {
+    if (_placedPoints.length < 4) {
+      _measurementService?.placePoint(position);
     }
   }
 
@@ -205,7 +204,7 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
             const CircularProgressIndicator(color: primaryRed),
             const SizedBox(height: 20),
             const Text(
-              'Initializing AR Camera...',
+              'Initializing Unity AR Camera...',
               style: TextStyle(color: Colors.white, fontSize: 16),
             ),
           ],
@@ -287,9 +286,24 @@ class _ARMeasurementScreenState extends State<ARMeasurementScreen> {
   }
 
   Widget _buildARView() {
-    return ArCoreView(
-      onArCoreViewCreated: _onArCoreViewCreated,
-      enableTapRecognizer: true,
+    return GestureDetector(
+      onTapUp: (details) {
+        final position = vector.Vector2(
+          details.localPosition.dx,
+          details.localPosition.dy,
+        );
+        _onUnityTap(position);
+      },
+      child: UnityWidget(
+        onUnityCreated: _onUnityCreated,
+        onUnityMessage: (message) {
+          print('Unity message: $message');
+        },
+        onUnitySceneLoaded: (sceneInfo) {
+          print('Unity scene loaded: ${sceneInfo?.name}');
+        },
+        gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{},
+      ),
     );
   }
 

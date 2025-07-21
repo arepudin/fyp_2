@@ -45,5 +45,17 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<!-- Camera permission for AR -->
+	<key>NSCameraUsageDescription</key>
+	<string>This app uses the camera for AR window measurements to help you get accurate curtain sizing.</string>
+	
+	<!-- Unity AR support -->
+	<key>io.flutter.embedded_views_preview</key>
+	<true/>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arkit</string>
+	</array>
 </dict>
 </plist>

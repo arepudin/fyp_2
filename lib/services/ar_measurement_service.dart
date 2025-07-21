@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:arcore_flutter_plugin/arcore_flutter_plugin.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_unity_widget/flutter_unity_widget.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 import '../utils/measurement_utils.dart';
 
@@ -14,6 +15,23 @@ class ARPoint {
     required this.timestamp,
     required this.id,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'position': [position.x, position.y, position.z],
+      'timestamp': timestamp.toIso8601String(),
+    };
+  }
+
+  factory ARPoint.fromJson(Map<String, dynamic> json) {
+    final pos = json['position'] as List;
+    return ARPoint(
+      id: json['id'],
+      position: vector.Vector3(pos[0], pos[1], pos[2]),
+      timestamp: DateTime.parse(json['timestamp']),
+    );
+  }
 }
 
 class WindowMeasurement {
@@ -41,7 +59,10 @@ class WindowMeasurement {
 }
 
 class ARMeasurementService {
-  late ArCoreController _arCoreController;
+  static const String _unityChannel = 'unity_ar_measurement';
+  static const MethodChannel _methodChannel = MethodChannel(_unityChannel);
+
+  UnityWidgetController? _unityController;
   final List<ARPoint> _placedPoints = [];
   final StreamController<List<ARPoint>> _pointsController = StreamController<List<ARPoint>>.broadcast();
   final StreamController<WindowMeasurement?> _measurementController = StreamController<WindowMeasurement?>.broadcast();
@@ -59,95 +80,114 @@ class ARMeasurementService {
   bool get isInitialized => _isInitialized;
   bool get canMeasure => _placedPoints.length >= 4;
 
-  /// Initialize AR session
-  Future<bool> initialize(ArCoreController controller) async {
+  /// Initialize Unity AR session
+  Future<bool> initialize(UnityWidgetController controller) async {
     try {
-      _arCoreController = controller;
+      _unityController = controller;
+      
+      // Set up method channel for Unity communication
+      _methodChannel.setMethodCallHandler(_handleUnityMessage);
+      
+      // Initialize Unity AR scene
+      await _sendToUnity('InitializeAR', {
+        'planeDetection': true,
+        'pointCloud': true,
+        'lightEstimation': true,
+      });
+      
       _isInitialized = true;
       return true;
     } catch (e) {
-      print('Failed to initialize AR: $e');
+      print('Failed to initialize Unity AR: $e');
       _isInitialized = false;
       return false;
     }
   }
 
-  /// Check if ARCore is available on device
-  static Future<bool> isARCoreAvailable() async {
+  /// Handle messages from Unity
+  Future<void> _handleUnityMessage(MethodCall call) async {
+    switch (call.method) {
+      case 'onPointPlaced':
+        _handlePointPlaced(call.arguments);
+        break;
+      case 'onARError':
+        _handleARError(call.arguments);
+        break;
+      case 'onPlaneDetected':
+        _handlePlaneDetected(call.arguments);
+        break;
+      default:
+        print('Unknown Unity message: ${call.method}');
+    }
+  }
+
+  /// Handle point placement from Unity
+  void _handlePointPlaced(Map<String, dynamic> data) {
     try {
-      return await ArCoreController.checkArCoreAvailability();
+      final point = ARPoint.fromJson(data);
+      _placedPoints.add(point);
+      _pointsController.add(List.from(_placedPoints));
+
+      // Calculate measurement if we have enough points
+      if (_placedPoints.length >= 4) {
+        _calculateMeasurement();
+      }
     } catch (e) {
-      print('ARCore availability check failed: $e');
+      print('Failed to handle point placement: $e');
+    }
+  }
+
+  /// Handle AR errors from Unity
+  void _handleARError(Map<String, dynamic> data) {
+    print('Unity AR Error: ${data['message']}');
+    // Could emit error events here if needed
+  }
+
+  /// Handle plane detection from Unity
+  void _handlePlaneDetected(Map<String, dynamic> data) {
+    // Plane detection events could be used for UI feedback
+    print('Plane detected in Unity');
+  }
+
+  /// Send command to Unity
+  Future<void> _sendToUnity(String command, Map<String, dynamic> data) async {
+    try {
+      if (_unityController != null) {
+        final message = {
+          'command': command,
+          'data': data,
+        };
+        await _methodChannel.invokeMethod('sendToUnity', message);
+      }
+    } catch (e) {
+      print('Failed to send command to Unity: $e');
+    }
+  }
+
+  /// Check if Unity AR is available on device
+  static Future<bool> isUnityARAvailable() async {
+    try {
+      final result = await _methodChannel.invokeMethod('checkARSupport');
+      return result['isSupported'] ?? false;
+    } catch (e) {
+      print('Unity AR availability check failed: $e');
       return false;
     }
   }
 
-  /// Check if ARCore is installed
-  static Future<bool> isARCoreInstalled() async {
-    try {
-      return await ArCoreController.checkIsArCoreInstalled();
-    } catch (e) {
-      print('ARCore installation check failed: $e');
-      return false;
-    }
-  }
-
-  /// Place a point in AR space
+  /// Place a point in AR space (triggered by screen tap)
   Future<void> placePoint(vector.Vector2 screenPosition) async {
     if (!_isInitialized || _placedPoints.length >= 4) return;
 
     try {
-      // Perform hit test to get 3D position
-      final hitTestResults = await _arCoreController.onNodeTap;
-      
-      if (hitTestResults.isNotEmpty) {
-        final hit = hitTestResults.first;
-        final position = vector.Vector3(
-          hit.pose.translation.x,
-          hit.pose.translation.y,
-          hit.pose.translation.z,
-        );
-
-        final point = ARPoint(
-          position: position,
-          timestamp: DateTime.now(),
-          id: 'point_${_placedPoints.length}',
-        );
-
-        _placedPoints.add(point);
-        _addVisualMarker(point);
-        _pointsController.add(List.from(_placedPoints));
-
-        // Calculate measurement if we have enough points
-        if (_placedPoints.length >= 4) {
-          _calculateMeasurement();
-        }
-      }
+      await _sendToUnity('PlacePoint', {
+        'screenX': screenPosition.x,
+        'screenY': screenPosition.y,
+        'pointIndex': _placedPoints.length,
+      });
     } catch (e) {
       print('Failed to place point: $e');
     }
-  }
-
-  /// Add visual marker in AR scene
-  void _addVisualMarker(ARPoint point) {
-    final node = ArCoreNode(
-      shape: ArCoreSphere(
-        radius: 0.02, // 2cm sphere
-        materials: [
-          ArCoreMaterial(
-            color: _placedPoints.length < 4 ? const Color(0xFFFF0000) : const Color(0xFF00FF00),
-            metallic: 0.0,
-          ),
-        ],
-      ),
-      position: vector.Vector3(
-        point.position.x,
-        point.position.y,
-        point.position.z,
-      ),
-    );
-
-    _arCoreController.addArCoreNode(node);
   }
 
   /// Calculate window measurements from placed points
@@ -197,6 +237,11 @@ class ARMeasurementService {
         ? MeasurementUnit.inches 
         : MeasurementUnit.meters;
     
+    // Update Unity with new unit
+    _sendToUnity('SetUnit', {
+      'unit': _currentUnit == MeasurementUnit.meters ? 'meters' : 'inches'
+    });
+    
     // Recalculate if we have a measurement
     if (_placedPoints.length >= 4) {
       _calculateMeasurement();
@@ -209,19 +254,8 @@ class ARMeasurementService {
     _pointsController.add([]);
     _measurementController.add(null);
     
-    // Clear AR scene (this would need to be implemented based on AR plugin capabilities)
-    _clearARScene();
-  }
-
-  /// Clear AR scene markers
-  void _clearARScene() {
-    // Implementation depends on ARCore plugin capabilities
-    // This is a placeholder for clearing visual markers
-    try {
-      // _arCoreController.removeAllNodes(); // If available
-    } catch (e) {
-      print('Failed to clear AR scene: $e');
-    }
+    // Clear Unity AR scene
+    _sendToUnity('ClearPoints', {});
   }
 
   /// Get measurement accuracy estimate
@@ -229,7 +263,6 @@ class ARMeasurementService {
     if (_placedPoints.length < 4) return 0.0;
 
     // Calculate based on distance from camera and point placement precision
-    // This is a simplified estimate
     double totalDistance = 0.0;
     for (final point in _placedPoints) {
       totalDistance += point.position.length; // Distance from origin (camera)
@@ -267,52 +300,52 @@ class ARMeasurementService {
     _measurementController.close();
     _placedPoints.clear();
     _isInitialized = false;
+    _unityController = null;
   }
 }
 
-/// AR Capability Information
+/// AR Capability Information for Unity
 class ARCapabilityInfo {
   final bool isSupported;
-  final bool isInstalled;
+  final bool isUnityAvailable;
   final String? errorMessage;
   final List<String> requirements;
 
   ARCapabilityInfo({
     required this.isSupported,
-    required this.isInstalled,
+    required this.isUnityAvailable,
     this.errorMessage,
     this.requirements = const [],
   });
 
-  bool get isAvailable => isSupported && isInstalled;
+  bool get isAvailable => isSupported && isUnityAvailable;
 
   static Future<ARCapabilityInfo> check() async {
     try {
-      final isSupported = await ARMeasurementService.isARCoreAvailable();
-      final isInstalled = await ARMeasurementService.isARCoreInstalled();
+      final isSupported = await ARMeasurementService.isUnityARAvailable();
       
       List<String> requirements = [];
       String? errorMessage;
 
       if (!isSupported) {
-        errorMessage = 'ARCore is not supported on this device';
-        requirements.add('Android device with ARCore support');
-        requirements.add('Android 7.0 (API level 24) or higher');
-      } else if (!isInstalled) {
-        errorMessage = 'ARCore is not installed';
-        requirements.add('Install ARCore from Google Play Store');
+        errorMessage = 'AR is not supported on this device';
+        requirements.addAll([
+          'Android device with ARCore support or iOS device with ARKit',
+          'Android 7.0 (API level 24) or iOS 11.0 or higher',
+          'Unity AR Foundation compatibility',
+        ]);
       }
 
       return ARCapabilityInfo(
         isSupported: isSupported,
-        isInstalled: isInstalled,
+        isUnityAvailable: isSupported, // Unity availability tied to AR support
         errorMessage: errorMessage,
         requirements: requirements,
       );
     } catch (e) {
       return ARCapabilityInfo(
         isSupported: false,
-        isInstalled: false,
+        isUnityAvailable: false,
         errorMessage: 'Failed to check AR capabilities: $e',
         requirements: ['Check device compatibility'],
       );
