@@ -1,5 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Camera permission for AR -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    
+    <!-- ARCore requirements -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-feature android:name="android.hardware.camera.ar" android:required="false" />
+    <uses-feature android:name="android.hardware.camera" android:required="true" />
+    
+    <!-- Indicate that this app requires ARCore ("AR Required" apps) -->
+    <meta-data android:name="com.google.ar.core" android:value="optional" />
 
     <application
         android:label="fyp_2"
