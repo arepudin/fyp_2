@@ -249,39 +249,49 @@ class _RecommendationCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Match % Chip
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _getScoreColor(displayScore),
-                    borderRadius: BorderRadius.circular(12), 
-                    boxShadow: [
-                      BoxShadow(
-                        // FIX: Replaced withOpacity with withAlpha
-                        color: Colors.black.withAlpha(128), // 0.5 opacity
-                        blurRadius: 4
-                      )
-                    ]
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        hasDetailedScores ? Icons.smart_toy : Icons.analytics,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$displayScore% Match', 
-                        style: const TextStyle(
-                          color: Colors.white, 
-                          fontWeight: FontWeight.bold, 
-                          fontSize: 12
-                        )
-                      ),
-                    ],
-                  ),
-                ),
+
+Container(
+  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  decoration: BoxDecoration(
+    gradient: LinearGradient(
+      colors: [
+        Color(0xFFB71C1C), // deep red
+        Color(0xFFD32F2F), // lighter red
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    borderRadius: BorderRadius.circular(20),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.15),
+        blurRadius: 6,
+        offset: Offset(1, 2),
+      ),
+    ],
+  ),
+  child: Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(
+        Icons.favorite, // heart icon, more friendly!
+        color: Colors.white,
+        size: 18,
+      ),
+      const SizedBox(width: 6),
+      Text(
+        '$displayScore% Match',
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+          letterSpacing: 0.5,
+          shadows: [Shadow(blurRadius: 2)],
+        ),
+      ),
+    ],
+  ),
+),
                 
                 // Similar Button
                 SizedBox(
@@ -303,14 +313,6 @@ class _RecommendationCard extends StatelessWidget {
             ),
           ),
 
-          // NEW: Detailed scoring breakdown
-          if (hasDetailedScores)
-            Positioned(
-              top: 60,
-              left: 16,
-              right: 16,
-              child: _buildDetailedScoring(recommendation.categoryScores),
-            ),
 
           // Bottom content
           Positioned(
@@ -382,76 +384,6 @@ class _RecommendationCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  /// NEW: Build detailed scoring breakdown
-  Widget _buildDetailedScoring(Map<String, double> categoryScores) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        // FIX: Replaced withOpacity with withAlpha
-        color: Colors.black.withAlpha(153), // 0.6 opacity
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Match Breakdown',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ...categoryScores.entries.map((entry) {
-            final score = (entry.value * 100).round();
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _getCategoryDisplayName(entry.key),
-                    style: const TextStyle(color: Colors.white70, fontSize: 10),
-                  ),
-                  Text(
-                    '$score%',
-                    style: TextStyle(
-                      color: _getScoreColor(score),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  /// Get display name for category
-  String _getCategoryDisplayName(String category) {
-    switch (category) {
-      case 'pattern': return 'Pattern';
-      case 'material': return 'Material';
-      case 'lightControl': return 'Light Control';
-      case 'roomType': return 'Room Type';
-      case 'style': return 'Style';
-      default: return category;
-    }
-  }
-
-  /// Get color based on score
-  Color _getScoreColor(int score) {
-    if (score >= 80) return Colors.green;
-    if (score >= 60) return Colors.orange;
-    if (score >= 40) return Colors.yellow;
-    return Colors.red;
   }
 
   Widget _buildInfoChip(String text) {
