@@ -5,9 +5,7 @@ import 'curtain_preference.dart';
 import 'my_order.dart';
 import 'my_profile.dart';
 import 'support.dart';
-import 'ar_measurement_screen.dart';
 import 'measurement_guide_screen.dart';
-import '../../services/ar_measurement_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -63,245 +61,16 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _showMeasurementOptions(BuildContext context) async {
-    // Check AR capabilities first
-    final arInfo = await ARCapabilityInfo.check();
-    
-    if (!mounted) return;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Choose Measurement Method',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Select how you\'d like to measure your windows for the perfect curtain fit.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.black54,
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // AR Measurement option
-            _buildMeasurementOption(
-              icon: Icons.view_in_ar,
-              title: 'AR Measurement',
-              subtitle: arInfo.isAvailable 
-                  ? 'Use your camera to measure windows in AR (Recommended)'
-                  : 'Not available on this device',
-              isEnabled: arInfo.isAvailable,
-              isRecommended: arInfo.isAvailable,
-              onTap: arInfo.isAvailable ? () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ARMeasurementScreen(),
-                  ),
-                );
-              } : null,
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Manual measurement option
-            _buildMeasurementOption(
-              icon: Icons.straighten,
-              title: 'Manual Guide',
-              subtitle: 'Step-by-step guide to measure windows manually',
-              isEnabled: true,
-              isRecommended: false,
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const MeasurementGuideScreen(),
-                  ),
-                );
-              },
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Info about AR requirements
-            if (!arInfo.isAvailable && arInfo.requirements.isNotEmpty) ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.info_outline, color: Colors.blue.shade600, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          'AR Requirements',
-                          style: TextStyle(
-                            color: Colors.blue.shade700,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    ...arInfo.requirements.map((req) => Padding(
-                      padding: const EdgeInsets.only(left: 28, bottom: 4),
-                      child: Text(
-                        '• $req',
-                        style: TextStyle(
-                          color: Colors.blue.shade600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    )).toList(),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-            
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: primaryRed),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: const Text('Cancel'),
-              ),
-            ),
-          ],
-        ),
+  void _navigateToMeasurementGuide() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MeasurementGuideScreen(),
       ),
     );
   }
 
-  Widget _buildMeasurementOption({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool isEnabled,
-    required bool isRecommended,
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: isEnabled ? onTap : null,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isEnabled ? Colors.white : Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isRecommended 
-                ? primaryRed 
-                : isEnabled 
-                    ? Colors.grey.shade300 
-                    : Colors.grey.shade200,
-            width: isRecommended ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isEnabled 
-                    ? (isRecommended ? primaryRed : Colors.grey.shade100)
-                    : Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: isEnabled 
-                    ? (isRecommended ? Colors.white : primaryRed)
-                    : Colors.grey.shade400,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: isEnabled ? Colors.black87 : Colors.grey.shade500,
-                        ),
-                      ),
-                      if (isRecommended) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: primaryRed,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Text(
-                            'RECOMMENDED',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isEnabled ? Colors.black54 : Colors.grey.shade400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isEnabled)
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: Colors.grey.shade400,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Future<void> _signOut() async {
     try {
@@ -500,7 +269,7 @@ class _HomePageState extends State<HomePage> {
         _buildActionCard(
           icon: Icons.straighten_outlined,
           title: 'Measure Guide',
-          onTap: () => _showMeasurementOptions(context),
+          onTap: () => _navigateToMeasurementGuide(),
         ),
         _buildActionCard(
           icon: Icons.person_outline,
