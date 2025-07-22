@@ -28,7 +28,7 @@ class _MeasurementGuideScreenState extends State<MeasurementGuideScreen> {
     MeasurementStep(
       title: 'Prepare Your Tools',
       description: 'You\'ll need a measuring tape or ruler for accurate measurements.',
-      imagePath: 'lib/asset/measurement_tools.png', // Placeholder
+      imagePath: null, // Will use icon instead
       tips: [
         'Use a metal measuring tape for best accuracy',
         'Have someone help you hold the tape steady',
@@ -38,7 +38,7 @@ class _MeasurementGuideScreenState extends State<MeasurementGuideScreen> {
     MeasurementStep(
       title: 'Measure Window Width',
       description: 'Measure the width of your window from the inside edge of the frame.',
-      imagePath: 'lib/asset/measure_width.png', // Placeholder
+      imagePath: null, // Will use icon instead
       tips: [
         'Measure at the top, middle, and bottom',
         'Use the smallest measurement to ensure proper fit',
@@ -48,7 +48,7 @@ class _MeasurementGuideScreenState extends State<MeasurementGuideScreen> {
     MeasurementStep(
       title: 'Measure Window Height',
       description: 'Measure the height from the top to the bottom of the window frame.',
-      imagePath: 'lib/asset/measure_height.png', // Placeholder
+      imagePath: null, // Will use icon instead
       tips: [
         'Measure at the left, center, and right sides',
         'Use the smallest measurement for proper fit',
@@ -58,7 +58,7 @@ class _MeasurementGuideScreenState extends State<MeasurementGuideScreen> {
     MeasurementStep(
       title: 'Record Your Measurements',
       description: 'Enter your measurements below and double-check for accuracy.',
-      imagePath: 'lib/asset/record_measurements.png', // Placeholder
+      imagePath: null, // Will use icon instead
       tips: [
         'Round to the nearest centimeter or 1/8 inch',
         'Double-check your measurements before proceeding',
@@ -497,13 +497,13 @@ class _MeasurementGuideScreenState extends State<MeasurementGuideScreen> {
 class MeasurementStep {
   final String title;
   final String description;
-  final String imagePath;
+  final String? imagePath;
   final List<String> tips;
 
   MeasurementStep({
     required this.title,
     required this.description,
-    required this.imagePath,
+    this.imagePath,
     required this.tips,
   });
 }

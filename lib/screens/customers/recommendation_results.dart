@@ -5,9 +5,7 @@ import 'curtain_preference.dart';
 import '../../constants/supabase.dart';
 import 'my_order.dart';
 import '../../services/user_interaction.dart';
-import 'ar_measurement_screen.dart';
 import 'measurement_guide_screen.dart';
-import '../../services/ar_measurement_service.dart';
 
 class RecommendationResultsScreen extends StatelessWidget {
   final List<ScoredRecommendation> recommendations;
@@ -98,7 +96,7 @@ class RecommendationResultsScreen extends StatelessWidget {
                           const Text('Enter Window Size (in cm)', style: TextStyle(color: Colors.black54)),
                           const Spacer(),
                           TextButton.icon(
-                            onPressed: () => _showMeasurementOptions(dialogContext, curtain, widthController, heightController),
+                            onPressed: () => _navigateToMeasurementGuide(dialogContext, widthController, heightController),
                             icon: const Icon(Icons.straighten, size: 16),
                             label: const Text('Measure', style: TextStyle(fontSize: 12)),
                             style: TextButton.styleFrom(
@@ -161,219 +159,25 @@ class RecommendationResultsScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _showMeasurementOptions(
+  void _navigateToMeasurementGuide(
     BuildContext context,
-    Curtain curtain,
     TextEditingController widthController,
     TextEditingController heightController,
-  ) async {
-    // Check AR capabilities first
-    final arInfo = await ARCapabilityInfo.check();
-    
-    if (!context.mounted) return;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Choose Measurement Method',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Get precise measurements for your curtains.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.black54,
-              ),
-            ),
-            const SizedBox(height: 20),
-            
-            // AR Measurement option
-            _buildMeasurementOption(
-              icon: Icons.view_in_ar,
-              title: 'AR Measurement',
-              subtitle: arInfo.isAvailable 
-                  ? 'Use your camera to measure windows in AR'
-                  : 'Not available on this device',
-              isEnabled: arInfo.isAvailable,
-              isRecommended: arInfo.isAvailable,
-              onTap: arInfo.isAvailable ? () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ARMeasurementScreen(
-                      onMeasurementsCompleted: (width, height) {
-                        widthController.text = width.toStringAsFixed(1);
-                        heightController.text = height.toStringAsFixed(1);
-                      },
-                    ),
-                  ),
-                );
-              } : null,
-            ),
-            
-            const SizedBox(height: 12),
-            
-            // Manual measurement option
-            _buildMeasurementOption(
-              icon: Icons.straighten,
-              title: 'Manual Guide',
-              subtitle: 'Step-by-step guide to measure windows manually',
-              isEnabled: true,
-              isRecommended: false,
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MeasurementGuideScreen(
-                      onMeasurementsEntered: (width, height) {
-                        widthController.text = width.toStringAsFixed(1);
-                        heightController.text = height.toStringAsFixed(1);
-                      },
-                    ),
-                  ),
-                );
-              },
-            ),
-            
-            const SizedBox(height: 16),
-            
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color.fromARGB(255, 158, 19, 17)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: const Text('Cancel'),
-              ),
-            ),
-          ],
+  ) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MeasurementGuideScreen(
+          onMeasurementsEntered: (width, height) {
+            widthController.text = width.toStringAsFixed(1);
+            heightController.text = height.toStringAsFixed(1);
+          },
         ),
       ),
     );
   }
 
-  Widget _buildMeasurementOption({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool isEnabled,
-    required bool isRecommended,
-    VoidCallback? onTap,
-  }) {
-    const primaryRed = Color.fromARGB(255, 158, 19, 17);
-    
-    return InkWell(
-      onTap: isEnabled ? onTap : null,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isEnabled ? Colors.white : Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isRecommended 
-                ? primaryRed 
-                : isEnabled 
-                    ? Colors.grey.shade300 
-                    : Colors.grey.shade200,
-            width: isRecommended ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isEnabled 
-                    ? (isRecommended ? primaryRed : Colors.grey.shade100)
-                    : Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: isEnabled 
-                    ? (isRecommended ? Colors.white : primaryRed)
-                    : Colors.grey.shade400,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isEnabled ? Colors.black87 : Colors.grey.shade500,
-                        ),
-                      ),
-                      if (isRecommended) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: primaryRed,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            'RECOMMENDED',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 8,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isEnabled ? Colors.black54 : Colors.grey.shade400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isEnabled)
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 14,
-                color: Colors.grey.shade400,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
