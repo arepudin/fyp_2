@@ -6,7 +6,6 @@ import 'curtain_preference.dart';
 import 'my_order.dart';
 import 'my_profile.dart';
 import 'support.dart';
-import 'chat.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -253,19 +252,6 @@ class _HomePageState extends State<HomePage> {
         mainAxisSpacing: 16,
         childAspectRatio: 1.0, 
         children: [
-          _buildActionCard(
-            icon: Icons.chat_bubble_outline,
-            title: 'Chat with Tailor',
-            subtitle: 'Get personalized advice',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ChatScreen()),
-              );
-            },
-            backgroundColor: Colors.white,
-            iconColor: primaryRed,
-          ),
           _buildActionCard(
             icon: Icons.receipt_long_outlined,
             title: 'My Orders',

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fyp_2/screens/tailors/chat_management.dart';
 import '../../constants/supabase.dart';
 import 'package:fyp_2/screens/sign_in.dart';
 
@@ -46,7 +45,6 @@ class _TailorDashboardScreenState extends State<TailorDashboardScreen> with Sing
         children: const [
           ManageOrdersView(),
           ManageStockView(),
-          TailorChatManagement(),
         ],
       ),
     );
