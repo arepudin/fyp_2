@@ -54,11 +54,11 @@ class _TailorChatManagementState extends State<TailorChatManagement> {
   }
 
   Stream<List<Map<String, dynamic>>> _getTailorConversations() {
-    return supabase
-        .from('chat_conversations')
-        .stream(primaryKey: ['id'])
-        .order('last_message_at', ascending: false);
-  }
+  return supabase
+      .from('chat_conversations')
+      .stream(primaryKey: ['id'])
+      .order('created_at', ascending: false);
+ }
 }
 
 class _ConversationCard extends StatelessWidget {

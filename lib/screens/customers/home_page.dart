@@ -251,7 +251,7 @@ class _HomePageState extends State<HomePage> {
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 1.0, // FIX: Adjusted aspect ratio to give more vertical space
+        childAspectRatio: 1.0, 
         children: [
           _buildActionCard(
             icon: Icons.chat_bubble_outline,
@@ -292,10 +292,17 @@ class _HomePageState extends State<HomePage> {
             title: 'My Profile',
             subtitle: 'Manage your account',
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MyProfilePage(userProfile: {},)),
-              );
+              // FIX: Pass the userProfile data to the MyProfilePage.
+              // We add a null check for safety, although the UI shouldn't be
+              // buildable without this data anyway.
+              if (userProfile != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MyProfilePage(userProfile: userProfile!),
+                  ),
+                );
+              }
             },
             backgroundColor: Colors.white,
             iconColor: primaryRed,
@@ -313,7 +320,6 @@ class _HomePageState extends State<HomePage> {
             backgroundColor: Colors.white,
             iconColor: primaryRed,
           ),
-          // FIX: Removed the "About" card
         ],
       ),
     );

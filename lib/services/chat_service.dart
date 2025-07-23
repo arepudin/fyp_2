@@ -21,14 +21,15 @@ class ChatService {
       }
 
       // Create new conversation
-      final response = await supabase
-          .from('chat_conversations')
-          .insert({
-            'customer_id': user.id,
-            'status': 'pending', // Will be 'active' when tailor joins
-          })
-          .select('id')
-          .single();
+final response = await supabase
+    .from('chat_conversations')
+    .insert({
+      'customer_id': user.id,
+      'status': 'pending',
+      'last_message_at': DateTime.now().toIso8601String(),
+    })
+    .select('id')
+    .single();
 
       return response['id'];
     } catch (e) {
@@ -55,10 +56,15 @@ class ChatService {
         'file_url': fileUrl,
         'file_name': fileName,
       });
-    } catch (e) {
-      throw Exception('Failed to send message: $e');
-    }
+    await supabase
+        .from('chat_conversations')
+        .update({'last_message_at': DateTime.now().toIso8601String()})
+        .eq('id', conversationId);
+        
+  } catch (e) {
+    throw Exception('Failed to send message: $e');
   }
+}
 
   static Stream<List<Map<String, dynamic>>> getMessages(String conversationId) {
     return supabase
@@ -79,27 +85,30 @@ class ChatService {
   }
 
   static Future<String?> uploadFile(String filePath, String fileName) async {
-    try {
-      final user = supabase.auth.currentUser;
-      if (user == null) throw Exception('User not authenticated');
+  try {
+    final user = supabase.auth.currentUser;
+    if (user == null) throw Exception('User not authenticated');
 
-      final fileExt = fileName.split('.').last;
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final storagePath = 'chat_files/${user.id}/$timestamp.$fileExt';
+    final fileExt = fileName.split('.').last;
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final storagePath = 'chat_files/${user.id}/$timestamp.$fileExt';
 
-      await supabase.storage
-          .from('chat-files')
-          .upload(storagePath, filePath as File);
+    // Create File object from the file path
+    final file = File(filePath);
 
-      final publicUrl = supabase.storage
-          .from('chat-files')
-          .getPublicUrl(storagePath);
+    await supabase.storage
+        .from('chat-files')
+        .upload(storagePath, file);
 
-      return publicUrl;
-    } catch (e) {
-      throw Exception('Failed to upload file: $e');
-    }
+    final publicUrl = supabase.storage
+        .from('chat-files')
+        .getPublicUrl(storagePath);
+
+    return publicUrl;
+  } catch (e) {
+    throw Exception('Failed to upload file: $e');
   }
+}
 
   static Future<void> markMessagesAsRead(String conversationId) async {
     try {
