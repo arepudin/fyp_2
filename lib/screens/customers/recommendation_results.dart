@@ -167,7 +167,7 @@ class RecommendationResultsScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => MeasurementGuideScreen(
+        builder: (_) => MeasurementMethodSelectionScreen(
           onMeasurementsEntered: (width, height) {
             widthController.text = width.toStringAsFixed(1);
             heightController.text = height.toStringAsFixed(1);
