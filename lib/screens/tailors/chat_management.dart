@@ -57,8 +57,8 @@ class _TailorChatManagementState extends State<TailorChatManagement> {
   return supabase
       .from('chat_conversations')
       .stream(primaryKey: ['id'])
-      .order('created_at', ascending: false);
- }
+      .order('last_message_at', ascending: false);
+}
 }
 
 class _ConversationCard extends StatelessWidget {
@@ -68,7 +68,7 @@ class _ConversationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status = conversation['status'] as String;
+    final status = conversation['status'] as String? ?? 'unknown';
     final Color statusColor = status == 'active' 
         ? Colors.green 
         : status == 'pending' 
@@ -88,17 +88,12 @@ class _ConversationCard extends StatelessWidget {
           children: [
             Text('Status: $status'),
             Text(
-              'Last activity: ${_formatDate(conversation['last_message_at'])}',
+              'Last activity: ${_formatDate(conversation['last_message_at'] ?? conversation['created_at'])}',
               style: const TextStyle(fontSize: 12),
             ),
           ],
         ),
-        trailing: status == 'pending' 
-            ? ElevatedButton(
-                onPressed: () => _acceptConversation(context),
-                child: const Text('Accept'),
-              )
-            : const Icon(Icons.arrow_forward_ios),
+        trailing: const Icon(Icons.arrow_forward_ios),
         onTap: () {
           Navigator.push(
             context,
@@ -111,50 +106,25 @@ class _ConversationCard extends StatelessWidget {
     );
   }
 
-  Future<void> _acceptConversation(BuildContext context) async {
+  String _formatDate(String? timestamp) {
+    if (timestamp == null) return 'Unknown';
+    
     try {
-      final user = supabase.auth.currentUser;
-      if (user == null) return;
+      final dateTime = DateTime.parse(timestamp);
+      final now = DateTime.now();
+      final difference = now.difference(dateTime);
 
-      await supabase
-          .from('chat_conversations')
-          .update({
-            'tailor_id': user.id,
-            'status': 'active',
-          })
-          .eq('id', conversation['id']);
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Conversation accepted!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+      if (difference.inDays > 0) {
+        return '${difference.inDays} day(s) ago';
+      } else if (difference.inHours > 0) {
+        return '${difference.inHours} hour(s) ago';
+      } else if (difference.inMinutes > 0) {
+        return '${difference.inMinutes} minute(s) ago';
+      } else {
+        return 'Just now';
       }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  String _formatDate(String timestamp) {
-    final dateTime = DateTime.parse(timestamp);
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays} day(s) ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hour(s) ago';
-    } else {
-      return '${difference.inMinutes} minute(s) ago';
+      return 'Unknown';
     }
   }
 }
