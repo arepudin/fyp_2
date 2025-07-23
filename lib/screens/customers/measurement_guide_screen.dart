@@ -303,7 +303,7 @@ class _MeasurementGuideScreenState extends State<MeasurementGuideScreen> {
                 ),
               ],
             ),
-          )).toList(),
+          )),
         ],
       ),
     );

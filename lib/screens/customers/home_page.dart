@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:fyp_2/screens/customers/measurement_guide_screen.dart';
 import '../../constants/supabase.dart';
 import '../sign_in.dart';
 import 'curtain_preference.dart';
 import 'my_order.dart';
 import 'my_profile.dart';
 import 'support.dart';
-import 'measurement_guide_screen.dart';
+import 'chat.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -70,8 +71,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
-
   Future<void> _signOut() async {
     try {
       await supabase.auth.signOut();
@@ -122,9 +121,6 @@ class _HomePageState extends State<HomePage> {
               
               // Secondary Action Cards
               _buildSecondaryActionGrid(context),
-              
-              // 4. REMOVED the profile details ExpansionTile from here
-
             ],
           ),
         ),
@@ -245,81 +241,133 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // 2. UPDATED THIS METHOD
+  // Updated grid with chat functionality
   Widget _buildSecondaryActionGrid(BuildContext context) {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 10,
-      mainAxisSpacing: 10,
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      childAspectRatio: 1.2, // Adjust card shape
-      children: [
-        _buildActionCard(
-          icon: Icons.shopping_cart_outlined,
-          title: 'My Orders',
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const MyOrdersScreen()),
-            );
-          },
-        ),
-        _buildActionCard(
-          icon: Icons.straighten_outlined,
-          title: 'Measure Guide',
-          onTap: () => _navigateToMeasurementGuide(),
-        ),
-        _buildActionCard(
-          icon: Icons.person_outline,
-          title: 'My Profile',
-          onTap: () {
-            if (userProfile != null) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.0, // FIX: Adjusted aspect ratio to give more vertical space
+        children: [
+          _buildActionCard(
+            icon: Icons.chat_bubble_outline,
+            title: 'Chat with Tailor',
+            subtitle: 'Get personalized advice',
+            onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => MyProfilePage(userProfile: userProfile!),
-                ),
+                MaterialPageRoute(builder: (_) => const ChatScreen()),
               );
-            }
-          },
-        ),
-        _buildActionCard(
-          icon: Icons.support_agent_outlined,
-          title: 'Support',
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SupportScreen()),
-            );
-          },
-        ),
-      ],
+            },
+            backgroundColor: Colors.white,
+            iconColor: primaryRed,
+          ),
+          _buildActionCard(
+            icon: Icons.receipt_long_outlined,
+            title: 'My Orders',
+            subtitle: 'Track your orders',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MyOrdersScreen()),
+              );
+            },
+            backgroundColor: Colors.white,
+            iconColor: primaryRed,
+          ),
+          _buildActionCard(
+            icon: Icons.straighten,
+            title: 'Measurement Guide',
+            subtitle: 'Learn how to measure',
+            onTap: _navigateToMeasurementGuide,
+            backgroundColor: Colors.white,
+            iconColor: primaryRed,
+          ),
+          _buildActionCard(
+            icon: Icons.person_outline,
+            title: 'My Profile',
+            subtitle: 'Manage your account',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MyProfilePage(userProfile: {},)),
+              );
+            },
+            backgroundColor: Colors.white,
+            iconColor: primaryRed,
+          ),
+          _buildActionCard(
+            icon: Icons.support_agent,
+            title: 'Support',
+            subtitle: 'Get help & assistance',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SupportScreen()),
+              );
+            },
+            backgroundColor: Colors.white,
+            iconColor: primaryRed,
+          ),
+          // FIX: Removed the "About" card
+        ],
+      ),
     );
   }
 
-  Widget _buildActionCard({required IconData icon, required String title, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Card(
-        elevation: 0,
-        color: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 32, color: primaryRed),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
-              textAlign: TextAlign.center,
-            ),
-          ],
+  Widget _buildActionCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    Color? backgroundColor,
+    Color? iconColor,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16), // Adjusted padding for better fit
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: backgroundColor ?? Colors.white,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon, 
+                size: 32, 
+                color: iconColor ?? primaryRed
+              ),
+              const SizedBox(height: 10), // Adjusted spacing
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );

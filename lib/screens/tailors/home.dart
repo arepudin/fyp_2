@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fyp_2/screens/tailors/chat_management.dart';
 import '../../constants/supabase.dart';
 import 'package:fyp_2/screens/sign_in.dart';
 
@@ -15,7 +16,7 @@ class _TailorDashboardScreenState extends State<TailorDashboardScreen> with Sing
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   Future<void> _signOut() async {
@@ -36,6 +37,7 @@ class _TailorDashboardScreenState extends State<TailorDashboardScreen> with Sing
           tabs: const [
             Tab(icon: Icon(Icons.receipt_long), text: 'Manage Orders'),
             Tab(icon: Icon(Icons.inventory_2), text: 'Manage Stock'),
+            Tab(icon: Icon(Icons.chat), text: 'Customer Chats'),
           ],
         ),
       ),
@@ -44,6 +46,7 @@ class _TailorDashboardScreenState extends State<TailorDashboardScreen> with Sing
         children: const [
           ManageOrdersView(),
           ManageStockView(),
+          TailorChatManagement(),
         ],
       ),
     );
