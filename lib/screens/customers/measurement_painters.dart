@@ -3,6 +3,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:fyp_2/services/ai_measurement.dart'; // Ensure this path is correct
+import 'package:fyp_2/utils/measurement_utils.dart';
 import '../../../models/measurement_models.dart'; // Ensure this path is correct
 
 // lib/screens/customers/widgets/measurement_painters.dart
@@ -84,12 +85,14 @@ class MeasurementPainter extends CustomPainter {
   final List<MeasurementLine> measurementLines;
   final double pixelToCmRatio;
   final MeasurementLine? previewLine;
+  final MeasurementUnit unit;
 
   MeasurementPainter({
     required this.imageInfo,
     required this.measurementLines,
     required this.pixelToCmRatio,
     this.previewLine,
+    this.unit = MeasurementUnit.meters,
   });
 
   @override
@@ -129,7 +132,8 @@ class MeasurementPainter extends CustomPainter {
     if (!isPreview) {
       canvas.drawLine(Offset(line.start.x, line.start.y), Offset(line.end.x, line.end.y), paint);
     }
-    final measurement = AIMeasurementService.pixelsToCentimeters(line.length, pixelToCmRatio);
+    final measurement = AIMeasurementService.pixelsToUserUnit(line.length, pixelToCmRatio, unit);
+    final unitLabel = MeasurementUtils.formatWithUnit(measurement, unit);
     final textSpan = TextSpan(text: '${line.label}: ${measurement.toStringAsFixed(1)} cm', style: style);
     final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr)..layout();
     final midX = (line.start.x + line.end.x) / 2;

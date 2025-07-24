@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui'; // For Flutter's Rect class
 
 import 'package:opencv_dart/opencv_dart.dart' as cv;
+import '../utils/measurement_utils.dart'; // Import for MeasurementUnit and utils
 
 // This enum and class remain the same.
 enum ReferenceObject {
@@ -59,7 +60,7 @@ class AIMeasurementService {
 
     cv.Mat? gray, blurred, edges;
     // The type of contours is a record containing the contours and hierarchy
-    (cv.Contours, cv.VecVec4i)? contoursRecord; 
+    (cv.Contours, cv.VecVec4i)? contoursRecord;
     try {
       gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY);
       blurred = cv.gaussianBlur(gray, (5, 5), 0);
@@ -68,12 +69,12 @@ class AIMeasurementService {
       // Store the record returned by findContours
       contoursRecord = cv.findContours(edges, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-      // === FIX 1: Iterate over the first element of the record (contoursRecord.$1) ===
+      // Iterate over the first element of the record (contoursRecord.$1)
       for (final contour in contoursRecord.$1) {
         final peri = cv.arcLength(contour, true);
         final approx = cv.approxPolyDP(contour, 0.02 * peri, true);
 
-        // === FIX 2: Use .length instead of .rows for VecPoint ===
+        // Use .length instead of .rows for VecPoint
         if (approx.length == 4) {
           final area = cv.contourArea(approx);
           if (area > 1000) {
@@ -101,7 +102,7 @@ class AIMeasurementService {
       blurred?.dispose();
       edges?.dispose();
 
-      // === FIX 3: Dispose of the elements within the record, not the record itself ===
+      // Dispose of the elements within the record, not the record itself
       if (contoursRecord != null) {
         contoursRecord.$1.dispose(); // Dispose the Vec<Mat> of contours
         contoursRecord.$2.dispose(); // Dispose the VecVec4i of hierarchy
@@ -109,7 +110,7 @@ class AIMeasurementService {
     }
   }
 
-  // --- The following helper methods remain unchanged ---
+  // --- The following helper methods are updated or added ---
 
   static double calculatePixelToCmRatio(Rect referenceRect, ReferenceObject objectType) {
     final referenceInfo = getReferenceInfo(objectType);
@@ -127,6 +128,22 @@ class AIMeasurementService {
     return realSize / pixelSize;
   }
 
+  // Update the return to be in meters instead of centimeters
+  static double pixelsToMeters(double pixels, double ratio) {
+    return (pixels * ratio) / 100.0; // Convert from cm to meters
+  }
+
+  // Add method to convert to user's preferred unit
+  static double pixelsToUserUnit(double pixels, double ratio, MeasurementUnit unit) {
+    double meters = pixelsToMeters(pixels, ratio);
+    if (unit == MeasurementUnit.inches) {
+      return MeasurementUtils.metersToInchesConversion(meters);
+    }
+    return meters;
+  }
+
+  // Keep original for backward compatibility but mark as deprecated
+  @deprecated
   static double pixelsToCentimeters(double pixels, double ratio) {
     return pixels * ratio;
   }

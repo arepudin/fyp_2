@@ -1,8 +1,12 @@
+// lib/screens/customers/manual_measurement_screen.dart
+
 import 'package:flutter/material.dart';
 
 // ASSUMPTION: You have these files in your project. Adjust the path if needed.
 import '../../utils/measurement_utils.dart'; // Contains MeasurementUnit, utils
-import 'ai_measurement_screen.dart';       // Contains AIMeasurementScreen
+import 'ai_measurement_screen.dart'; // Contains AIMeasurementScreen
+// Add this import at the top
+import '../../services/measurement.dart';
 
 // -----------------------------------------------------------------------------
 // SCREEN 1: The Main Selection Hub
@@ -47,11 +51,9 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16, color: Colors.black54),
             ),
             const SizedBox(height: 32),
-            
             // AI Measurement Option
             _buildMeasurementMethodCard(
               context: context,
-              // FIX: Changed icon to match the screenshot
               icon: Icons.camera_alt_outlined,
               title: 'AI-Assisted Measurement',
               subtitle: 'Use your camera for quick, accurate results',
@@ -59,9 +61,7 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
               onTap: () => _openAIMeasurement(context),
               isRecommended: true,
             ),
-            
             const SizedBox(height: 16),
-            
             // Manual Measurement Option
             _buildMeasurementMethodCard(
               context: context,
@@ -70,9 +70,7 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
               subtitle: 'Follow our guide using a measuring tape',
               onTap: () => _openManualMeasurement(context),
             ),
-            
             const SizedBox(height: 32),
-            
             _buildInfoCard(),
           ],
         ),
@@ -93,7 +91,6 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
       elevation: 2,
       shadowColor: Colors.grey.withOpacity(0.2),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      // Added for better clipping of InkWell ripple
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -102,9 +99,7 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: isRecommended 
-                ? Border.all(color: primaryRed, width: 2)
-                : null,
+            border: isRecommended ? Border.all(color: primaryRed, width: 2) : null,
           ),
           child: Row(
             children: [
@@ -123,7 +118,6 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        // FIX: Wrapped the title Text in a Flexible widget to prevent overflow.
                         Flexible(
                           child: Text(
                             title,
@@ -161,7 +155,7 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8), // Added spacing for the arrow
+              const SizedBox(width: 8),
               const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
             ],
           ),
@@ -224,7 +218,7 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------------------
-// SCREEN 2: The Step-by-Step Manual Measurement Guide (UNCHANGED)
+// SCREEN 2: The Step-by-Step Manual Measurement Guide
 // -----------------------------------------------------------------------------
 class ManualMeasurementGuideScreen extends StatefulWidget {
   final Function(double width, double height)? onMeasurementsEntered;
@@ -238,19 +232,20 @@ class ManualMeasurementGuideScreen extends StatefulWidget {
   State<ManualMeasurementGuideScreen> createState() => _ManualMeasurementGuideScreenState();
 }
 
+// Update the _ManualMeasurementGuideScreenState class:
 class _ManualMeasurementGuideScreenState extends State<ManualMeasurementGuideScreen> {
   final PageController _pageController = PageController();
   final TextEditingController _widthController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
-  
+
   int _currentPage = 0;
   MeasurementUnit _selectedUnit = MeasurementUnit.meters;
   String? _validationError;
+  bool _isSaving = false; // Add this state variable
 
   static const Color primaryRed = Color.fromARGB(255, 158, 19, 17);
 
-
-final List<MeasurementStep> _measurementSteps = [
+  final List<MeasurementStep> _measurementSteps = [
     MeasurementStep(
       title: 'Prepare Your Tools',
       description: 'You\'ll need a measuring tape or ruler for accurate measurements.',
@@ -259,7 +254,6 @@ final List<MeasurementStep> _measurementSteps = [
         'Have someone help you hold the tape steady.',
         'Ensure the tape is straight and not sagging.',
       ],
-      // NEW: Provide the path to your image for this step.
       imageAsset: 'asset/measure_tape.jpeg',
     ),
     MeasurementStep(
@@ -270,7 +264,6 @@ final List<MeasurementStep> _measurementSteps = [
         'Use the smallest measurement to ensure a proper fit.',
         'Include the window frame in your measurement.',
       ],
-      // NEW: Provide the path to your image for this step.
       imageAsset: 'asset/Width.jpeg',
     ),
     MeasurementStep(
@@ -281,7 +274,6 @@ final List<MeasurementStep> _measurementSteps = [
         'Use the smallest measurement for a proper fit.',
         'Measure from frame to frame, not glass to glass.',
       ],
-      // NEW: Provide the path to your image for this step.
       imageAsset: 'asset/Height.jpeg',
     ),
     MeasurementStep(
@@ -292,7 +284,6 @@ final List<MeasurementStep> _measurementSteps = [
         'Double-check your measurements before proceeding.',
         'Consider adding extra length for the curtain rod placement.',
       ],
-      // NEW: This page is for input, but you can still have an image.
       imageAsset: 'asset/guide_step4_record.png',
     ),
   ];
@@ -384,16 +375,90 @@ final List<MeasurementStep> _measurementSteps = [
     );
   }
 
-  void _submitMeasurements(double width, double height) {
-    if (widget.onMeasurementsEntered != null) {
-      final widthCm = MeasurementUtils.toStorageUnit(width, _selectedUnit);
-      final heightCm = MeasurementUtils.toStorageUnit(height, _selectedUnit);
-      widget.onMeasurementsEntered!(widthCm, heightCm);
+  // Update the submit measurements method
+  void _submitMeasurements(double width, double height) async {
+    setState(() => _isSaving = true);
+
+    try {
+      // Save to database using the original units
+      await MeasurementService.saveMeasurement(
+        width: width,
+        height: height,
+        unit: _selectedUnit,
+        notes: 'Manual measurement in ${_selectedUnit.name}',
+      );
+
+      // Call the callback with original units
+      if (widget.onMeasurementsEntered != null) {
+        widget.onMeasurementsEntered!(width, height);
+      }
+
+      // Show success message
+      if (mounted) {
+        _showSuccessDialog(width, height);
+      }
+    } catch (e) {
+      // Show error dialog
+      if (mounted) {
+        _showErrorDialog(e.toString(), width, height);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
-    // Pop twice to return from the guide and the selection screen
-    // Or adjust based on your desired navigation flow
-    int popCount = 0;
-    Navigator.of(context).popUntil((_) => popCount++ >= 2);
+  }
+
+  void _showSuccessDialog(double width, double height) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Measurement Saved'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Your measurement has been saved successfully!'),
+            const SizedBox(height: 16),
+            Text('Width: ${MeasurementUtils.formatWithUnit(width, _selectedUnit)}'),
+            Text('Height: ${MeasurementUtils.formatWithUnit(height, _selectedUnit)}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Close guide screen
+              Navigator.pop(context); // Close selection screen
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String error, double width, double height) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Save Failed'),
+        content: Text('Failed to save measurement: $error'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _submitMeasurements(width, height); // Retry
+            },
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -406,27 +471,51 @@ final List<MeasurementStep> _measurementSteps = [
         foregroundColor: Colors.black,
         elevation: 0,
       ),
-      body: Column(
+      body: Stack(
         children: [
-          _buildProgressIndicator(),
-          Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              onPageChanged: (index) => setState(() => _currentPage = index),
-              itemCount: _measurementSteps.length,
-              itemBuilder: (context, index) {
-                return (index == _measurementSteps.length - 1)
-                  ? _buildMeasurementInputPage(_measurementSteps[index])
-                  : _buildGuidePage(_measurementSteps[index]);
-              },
-            ),
+          Column(
+            children: [
+              _buildProgressIndicator(),
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (page) => setState(() => _currentPage = page),
+                  itemCount: _measurementSteps.length,
+                  itemBuilder: (context, index) {
+                    final step = _measurementSteps[index];
+                    return index == _measurementSteps.length - 1
+                        ? _buildMeasurementInputPage(step)
+                        : _buildGuidePage(step);
+                  },
+                ),
+              ),
+              _buildNavigationButtons(),
+            ],
           ),
-          _buildNavigationButtons(),
+          if (_isSaving)
+            Container(
+              color: Colors.black54,
+              child: const Center(
+                child: Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('Saving measurement...'),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
-  
+
   Widget _buildProgressIndicator() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -458,8 +547,6 @@ final List<MeasurementStep> _measurementSteps = [
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          
-          // MODIFIED: Replaced the placeholder Container with a real image.
           Container(
             height: 200,
             width: double.infinity,
@@ -467,13 +554,11 @@ final List<MeasurementStep> _measurementSteps = [
               color: Colors.grey.shade200, // Background color while image loads
               borderRadius: BorderRadius.circular(12),
             ),
-            // Use ClipRRect to ensure the image respects the border radius.
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.asset(
                 step.imageAsset, // Use the image path from our model
                 fit: BoxFit.cover, // Makes the image fill the container
-                // Optional: Add an error builder for robustness
                 errorBuilder: (context, error, stackTrace) {
                   return const Center(
                     child: Icon(
@@ -486,41 +571,36 @@ final List<MeasurementStep> _measurementSteps = [
               ),
             ),
           ),
-          
           const SizedBox(height: 20),
           Text(step.description, style: const TextStyle(fontSize: 16, height: 1.5)),
           const SizedBox(height: 24),
           const Text('Tips:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryRed)),
           const SizedBox(height: 12),
           ...step.tips.map((tip) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.check_circle, size: 20, color: primaryRed),
-                const SizedBox(width: 12),
-                Expanded(child: Text(tip, style: const TextStyle(fontSize: 14, height: 1.4))),
-              ],
-            ),
-          )),
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.check_circle, size: 20, color: primaryRed),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(tip, style: const TextStyle(fontSize: 14, height: 1.4))),
+                  ],
+                ),
+              )),
         ],
       ),
     );
   }
 
-    Widget _buildMeasurementInputPage(MeasurementStep step) {
+  // Update the placeholder text in the measurement input page
+  Widget _buildMeasurementInputPage(MeasurementStep step) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- START: Added content from the guide page ---
-          Text(
-            step.title, 
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)
-          ),
+          Text(step.title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          // Display the image for the final step
           Container(
             height: 200,
             width: double.infinity,
@@ -531,20 +611,16 @@ final List<MeasurementStep> _measurementSteps = [
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.asset(
-                step.imageAsset, // Use the image path
+                step.imageAsset,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => const Center(
-                  child: Icon(Icons.image_not_supported_outlined, size: 64, color: Colors.grey),
-                ),
+                errorBuilder: (context, error, stackTrace) =>
+                    const Center(child: Icon(Icons.image_not_supported_outlined, size: 64, color: Colors.grey)),
               ),
             ),
           ),
           const SizedBox(height: 20),
           Text(step.description, style: const TextStyle(fontSize: 16, height: 1.5)),
           const SizedBox(height: 24),
-          // --- END: Added content from the guide page ---
-
-          // This is the original input section, which remains the same
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -559,22 +635,45 @@ final List<MeasurementStep> _measurementSteps = [
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: RadioListTile<MeasurementUnit>(title: const Text('Meters'), value: MeasurementUnit.meters, groupValue: _selectedUnit, activeColor: primaryRed, onChanged: (v) => setState(() => _selectedUnit = v!))),
-                    Expanded(child: RadioListTile<MeasurementUnit>(title: const Text('Inches'), value: MeasurementUnit.inches, groupValue: _selectedUnit, activeColor: primaryRed, onChanged: (v) => setState(() => _selectedUnit = v!))),
+                    Expanded(
+                        child: RadioListTile<MeasurementUnit>(
+                            title: const Text('Meters'),
+                            value: MeasurementUnit.meters,
+                            groupValue: _selectedUnit,
+                            activeColor: primaryRed,
+                            onChanged: (v) => setState(() => _selectedUnit = v!))),
+                    Expanded(
+                        child: RadioListTile<MeasurementUnit>(
+                            title: const Text('Inches'),
+                            value: MeasurementUnit.inches,
+                            groupValue: _selectedUnit,
+                            activeColor: primaryRed,
+                            onChanged: (v) => setState(() => _selectedUnit = v!))),
                   ],
                 ),
               ],
             ),
           ),
           const SizedBox(height: 20),
-          _buildMeasurementInput('Window Width', _widthController, 'e.g., 1.5 for meters, 60 for inches'),
+          _buildMeasurementInput(
+            'Window Width',
+            _widthController,
+            _selectedUnit == MeasurementUnit.meters ? 'e.g., 1.5 (meters)' : 'e.g., 60 (inches)',
+          ),
           const SizedBox(height: 16),
-          _buildMeasurementInput('Window Height', _heightController, 'e.g., 2.1 for meters, 84 for inches'),
+          _buildMeasurementInput(
+            'Window Height',
+            _heightController,
+            _selectedUnit == MeasurementUnit.meters ? 'e.g., 2.1 (meters)' : 'e.g., 84 (inches)',
+          ),
           if (_validationError != null) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.red.shade200)),
+              decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade200)),
               child: Row(
                 children: [
                   Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
@@ -601,7 +700,8 @@ final List<MeasurementStep> _measurementSteps = [
           decoration: InputDecoration(
             hintText: hint,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: primaryRed)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: primaryRed)),
           ),
         ),
       ],
