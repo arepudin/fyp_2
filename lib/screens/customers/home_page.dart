@@ -205,33 +205,26 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 20),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CurtainPreferenceScreen(),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: primaryRed,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CurtainPreferenceScreen(),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: primaryRed,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Start Designing', style: TextStyle(fontWeight: FontWeight.bold)),
-                    SizedBox(width: 8),
-                    Icon(Icons.arrow_forward_ios, size: 14),
-                  ],
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text(
+                'Start Designing >',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
             ),
           ],
@@ -240,7 +233,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Updated grid with chat functionality
   Widget _buildSecondaryActionGrid(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -250,10 +242,11 @@ class _HomePageState extends State<HomePage> {
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 1.0, 
+        // FIX: Adjusted aspect ratio further to give more height and fix overflow.
+        childAspectRatio: 0.9, 
         children: [
           _buildActionCard(
-            icon: Icons.receipt_long_outlined,
+            icon: Icons.article_outlined,
             title: 'My Orders',
             subtitle: 'Track your orders',
             onTap: () {
@@ -274,13 +267,10 @@ class _HomePageState extends State<HomePage> {
             iconColor: primaryRed,
           ),
           _buildActionCard(
-            icon: Icons.person_outline,
+            icon: Icons.person,
             title: 'My Profile',
             subtitle: 'Manage your account',
             onTap: () {
-              // FIX: Pass the userProfile data to the MyProfilePage.
-              // We add a null check for safety, although the UI shouldn't be
-              // buildable without this data anyway.
               if (userProfile != null) {
                 Navigator.push(
                   context,
@@ -326,7 +316,7 @@ class _HomePageState extends State<HomePage> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.all(16), // Adjusted padding for better fit
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             color: backgroundColor ?? Colors.white,
@@ -339,7 +329,7 @@ class _HomePageState extends State<HomePage> {
                 size: 32, 
                 color: iconColor ?? primaryRed
               ),
-              const SizedBox(height: 10), // Adjusted spacing
+              const SizedBox(height: 10),
               Text(
                 title,
                 style: const TextStyle(
