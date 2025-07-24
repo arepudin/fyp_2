@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../models/curtain_model.dart';
 import '../../models/recommendation_model.dart';
+import '../../services/measurement.dart'; // Import measurement service
+import '../../utils/measurement_utils.dart'; // Import measurement utils
 import 'curtain_preference.dart';
 import '../../constants/supabase.dart';
 import 'my_order.dart';
@@ -25,159 +27,14 @@ class RecommendationResultsScreen extends StatelessWidget {
       ),
     );
   }
-  
-  Future<void> _placeOrder({
-    required BuildContext context,
-    required Curtain curtain,
-    required double width,
-    required double height,
-  }) async {
-    final user = supabase.auth.currentUser;
-    if (user == null) {
-      throw Exception('User is not authenticated.');
-    }
-    final measurementResponse = await supabase.from('measurements').insert({
-      'user_id': user.id,
-      'window_width': width,
-      'window_height': height,
-    }).select().single();
 
-    final measurementId = measurementResponse['id'];
-    await supabase.from('orders').insert({
-      'user_id': user.id,
-      'curtain_id': curtain.id,
-      'measurement_id': measurementId,
-    });
-    
-    // Track the order interaction
-    await UserInteractionService.trackOrder(curtain.id);
-  }
-
+  // The dialog is now handled by a dedicated stateful widget below.
   Future<void> _showConfirmationDialog(BuildContext context, Curtain curtain) async {
-    final formKey = GlobalKey<FormState>();
-    final widthController = TextEditingController();
-    final heightController = TextEditingController();
-    bool isPlacingOrder = false;
-
     return showDialog(
       context: context,
-      barrierDismissible: !isPlacingOrder,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('Confirm Your Order', style: TextStyle(fontWeight: FontWeight.bold)),
-              content: SingleChildScrollView(
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(curtain.imageUrl, width: 60, height: 60, fit: BoxFit.cover),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              curtain.name,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Divider(height: 30),
-                      Row(
-                        children: [
-                          const Text('Enter Window Size (in cm)', style: TextStyle(color: Colors.black54)),
-                          const Spacer(),
-                          TextButton.icon(
-                            onPressed: () => _navigateToMeasurementGuide(dialogContext, widthController, heightController),
-                            icon: const Icon(Icons.straighten, size: 16),
-                            label: const Text('Measure', style: TextStyle(fontSize: 12)),
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: widthController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(labelText: 'Width', border: OutlineInputBorder(), prefixIcon: Icon(Icons.width_full)),
-                        validator: (v) => v == null || v.isEmpty ? 'Please enter width.' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: heightController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(labelText: 'Height', border: OutlineInputBorder(), prefixIcon: Icon(Icons.height)),
-                        validator: (v) => v == null || v.isEmpty ? 'Please enter height.' : null,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(onPressed: isPlacingOrder ? null : () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
-                ElevatedButton(
-                  onPressed: isPlacingOrder ? null : () async {
-                    if (formKey.currentState!.validate()) {
-                      setDialogState(() => isPlacingOrder = true);
-                      try {
-                        await _placeOrder(
-                          context: context,
-                          curtain: curtain, 
-                          width: double.parse(widthController.text),
-                          height: double.parse(heightController.text),
-                        );
-                        if (!context.mounted) return;
-                        Navigator.of(dialogContext).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Order placed successfully!'), backgroundColor: Colors.green));
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const MyOrdersScreen()));
-                      } catch (e) {
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error placing order: $e'), backgroundColor: Colors.red));
-                      } finally {
-                        setDialogState(() => isPlacingOrder = false);
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 158, 19, 17)),
-                  child: isPlacingOrder ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Place Order', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (dialogContext) => _ConfirmOrderDialog(curtain: curtain),
     );
   }
-
-  void _navigateToMeasurementGuide(
-    BuildContext context,
-    TextEditingController widthController,
-    TextEditingController heightController,
-  ) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MeasurementMethodSelectionScreen(
-          onMeasurementsEntered: (width, height) {
-            widthController.text = width.toStringAsFixed(1);
-            heightController.text = height.toStringAsFixed(1);
-          },
-        ),
-      ),
-    );
-  }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -191,7 +48,9 @@ class RecommendationResultsScreen extends StatelessWidget {
       ),
       body: recommendations.isEmpty
           ? const Center(
-              child: Text('No matching curtains found.\nTry a different combination!', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Colors.grey)),
+              child: Text('No matching curtains found.\nTry a different combination!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.grey)),
             )
           : ListView.builder(
               padding: const EdgeInsets.all(16.0),
@@ -200,14 +59,276 @@ class RecommendationResultsScreen extends StatelessWidget {
                 final recommendation = recommendations[index];
                 return _RecommendationCard(
                   recommendation: recommendation,
-                  onFindSimilar: () => _findSimilar(context, recommendation.curtain),
-                  onOrder: () => _showConfirmationDialog(context, recommendation.curtain),
+                  onFindSimilar: () =>
+                      _findSimilar(context, recommendation.curtain),
+                  onOrder: () =>
+                      _showConfirmationDialog(context, recommendation.curtain),
                 );
               },
             ),
     );
   }
 }
+
+/// A stateful widget that manages the logic for the order confirmation dialog.
+class _ConfirmOrderDialog extends StatefulWidget {
+  final Curtain curtain;
+
+  const _ConfirmOrderDialog({required this.curtain});
+
+  @override
+  State<_ConfirmOrderDialog> createState() => _ConfirmOrderDialogState();
+}
+
+class _ConfirmOrderDialogState extends State<_ConfirmOrderDialog> {
+  bool _isLoadingMeasurement = true;
+  bool _isPlacingOrder = false;
+  Map<String, dynamic>? _latestMeasurement;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLatestMeasurement();
+  }
+
+  /// Fetches the measurement data from the service.
+  Future<void> _fetchLatestMeasurement() async {
+    try {
+      final measurement = await MeasurementService.getLatestUserMeasurement();
+      if (mounted) {
+        setState(() {
+          if (measurement == null) {
+            _errorMessage = 'No measurement found. Please add a window measurement first.';
+          } else {
+            _latestMeasurement = measurement;
+          }
+          _isLoadingMeasurement = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Could not fetch your measurements.';
+          _isLoadingMeasurement = false;
+        });
+      }
+    }
+  }
+
+  /// Places the order using the fetched measurement ID.
+  Future<void> _placeOrder(String measurementId) async {
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      throw Exception('User is not authenticated.');
+    }
+
+    await supabase.from('orders').insert({
+      'user_id': user.id,
+      'curtain_id': widget.curtain.id,
+      'measurement_id': measurementId,
+    });
+
+    await UserInteractionService.trackOrder(widget.curtain.id);
+  }
+
+  /// Navigates to the measurement guide screen.
+  void _navigateToMeasurementGuide() {
+    // First, pop the dialog
+    Navigator.of(context).pop();
+    // Then push the new screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        // We don't need a callback, the dialog will re-fetch when opened again.
+        builder: (_) => const MeasurementMethodSelectionScreen(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text('Confirm Your Order', style: TextStyle(fontWeight: FontWeight.bold)),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Product Info
+            Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(widget.curtain.imageUrl,
+                      width: 60, height: 60, fit: BoxFit.cover),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    widget.curtain.name,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 30),
+            // Dynamic content based on measurement fetch state
+            _buildMeasurementContent(),
+          ],
+        ),
+      ),
+      actions: _buildActions(),
+    );
+  }
+
+  /// Builds the main content of the dialog based on the loading/error/success state.
+  Widget _buildMeasurementContent() {
+    if (_isLoadingMeasurement) {
+      return const SizedBox(
+        height: 100,
+        child: Center(
+            child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text("Fetching latest measurement..."),
+          ],
+        )),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.error_outline, color: Colors.red.shade400, size: 40),
+          const SizedBox(height: 16),
+          Text(
+            _errorMessage!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.black54),
+          ),
+        ],
+      );
+    }
+
+    if (_latestMeasurement != null) {
+      final width = _latestMeasurement!['window_width'];
+      final height = _latestMeasurement!['window_height'];
+      final unitName = _latestMeasurement!['unit'] as String;
+      // Convert unit string from DB back to enum
+      final unit = MeasurementUnit.values.firstWhere(
+        (e) => e.name == unitName,
+        orElse: () => MeasurementUnit.meters,
+      );
+
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Using your latest saved measurement:',
+              style: TextStyle(color: Colors.black54)),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildMeasurementDisplay('Width', width, unit),
+                _buildMeasurementDisplay('Height', height, unit),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+    // Fallback case
+    return const SizedBox.shrink();
+  }
+
+  /// Builds the action buttons for the dialog.
+  List<Widget> _buildActions() {
+    if (_errorMessage != null) {
+      return [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _navigateToMeasurementGuide,
+          style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 158, 19, 17)),
+          child: const Text('Add Measurement', style: TextStyle(color: Colors.white)),
+        ),
+      ];
+    }
+
+    return [
+      TextButton(
+        onPressed: _isPlacingOrder ? null : () => Navigator.of(context).pop(),
+        child: const Text('Cancel'),
+      ),
+      ElevatedButton(
+        onPressed: (_isPlacingOrder || _latestMeasurement == null)
+            ? null
+            : () async {
+                setState(() => _isPlacingOrder = true);
+                try {
+                  await _placeOrder(_latestMeasurement!['id']);
+                  if (!mounted) return;
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Order placed successfully!'),
+                      backgroundColor: Colors.green));
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const MyOrdersScreen()));
+                } catch (e) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('Error placing order: $e'),
+                      backgroundColor: Colors.red));
+                } finally {
+                  if (mounted) {
+                    setState(() => _isPlacingOrder = false);
+                  }
+                }
+              },
+        style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 158, 19, 17)),
+        child: _isPlacingOrder
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+            : const Text('Place Order', style: TextStyle(color: Colors.white)),
+      ),
+    ];
+  }
+
+  /// Helper widget to display a single measurement value (e.g., Width).
+  Widget _buildMeasurementDisplay(String label, double value, MeasurementUnit unit) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(fontSize: 14, color: Colors.black54)),
+        const SizedBox(height: 4),
+        Text(
+          MeasurementUtils.formatWithUnit(value, unit),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue),
+        ),
+      ],
+    );
+  }
+}
+
+// =========================================================================
+// The rest of the file (_RecommendationCard) remains unchanged.
+// =========================================================================
 
 /// Enhanced Recommendation Card with detailed scoring
 class _RecommendationCard extends StatelessWidget {
@@ -227,9 +348,9 @@ class _RecommendationCard extends StatelessWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       UserInteractionService.trackView(recommendation.curtain.id);
     });
-    
+
     const primaryRed = Color.fromARGB(255, 158, 19, 17);
-    
+
     final curtain = recommendation.curtain;
     final displayScore = recommendation.displayScore;
     final hasDetailedScores = recommendation.categoryScores.isNotEmpty;
@@ -244,13 +365,12 @@ class _RecommendationCard extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: Image.network(
-                curtain.imageUrl, 
+                curtain.imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    Container(
-                      color: Colors.grey.shade300, 
-                      child: const Icon(Icons.broken_image, size: 50, color: Colors.grey)
-                    ),
+                errorBuilder: (context, error, stackTrace) => Container(
+                    color: Colors.grey.shade300,
+                    child:
+                        const Icon(Icons.broken_image, size: 50, color: Colors.grey)),
               ),
             ),
           ),
@@ -260,11 +380,10 @@ class _RecommendationCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 gradient: LinearGradient(
                   colors: [
-                    // FIX: Replaced withOpacity with withAlpha
                     Colors.black.withAlpha(102), // 0.4 opacity
-                    Colors.transparent, 
-                    Colors.transparent, 
-                    Colors.black.withAlpha(204)  // 0.8 opacity
+                    Colors.transparent,
+                    Colors.transparent,
+                    Colors.black.withAlpha(204) // 0.8 opacity
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -273,7 +392,7 @@ class _RecommendationCard extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Top-left: Match percentage and Similar button
           Positioned(
             top: 16,
@@ -283,50 +402,49 @@ class _RecommendationCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Match % Chip
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFFB71C1C), // deep red
+                        Color(0xFFD32F2F), // lighter red
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 6,
+                        offset: const Offset(1, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.favorite, // heart icon, more friendly!
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '$displayScore% Match',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          letterSpacing: 0.5,
+                          shadows: [Shadow(blurRadius: 2)],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
-Container(
-  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-  decoration: BoxDecoration(
-    gradient: LinearGradient(
-      colors: [
-        Color(0xFFB71C1C), // deep red
-        Color(0xFFD32F2F), // lighter red
-      ],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    ),
-    borderRadius: BorderRadius.circular(20),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.15),
-        blurRadius: 6,
-        offset: Offset(1, 2),
-      ),
-    ],
-  ),
-  child: Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Icon(
-        Icons.favorite, // heart icon, more friendly!
-        color: Colors.white,
-        size: 18,
-      ),
-      const SizedBox(width: 6),
-      Text(
-        '$displayScore% Match',
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 14,
-          letterSpacing: 0.5,
-          shadows: [Shadow(blurRadius: 2)],
-        ),
-      ),
-    ],
-  ),
-),
-                
                 // Similar Button
                 SizedBox(
                   width: 80,
@@ -334,19 +452,18 @@ Container(
                     onPressed: onFindSimilar,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
-                      // FIX: Replaced withOpacity with withAlpha
                       backgroundColor: Colors.black.withAlpha(77), // 0.3 opacity
                       side: const BorderSide(color: Colors.white70),
                       visualDensity: VisualDensity.compact,
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                     ),
-                    child: const Text('Similar', style: TextStyle(fontSize: 12)),
+                    child:
+                        const Text('Similar', style: TextStyle(fontSize: 12)),
                   ),
                 ),
               ],
             ),
           ),
-
 
           // Bottom content
           Positioned(
@@ -372,11 +489,10 @@ Container(
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: Colors.white, 
-                              fontSize: 22, 
-                              fontWeight: FontWeight.bold, 
-                              shadows: [Shadow(blurRadius: 2)]
-                            ),
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                shadows: [Shadow(blurRadius: 2)]),
                           ),
                           const SizedBox(height: 8),
                           Wrap(
@@ -390,9 +506,9 @@ Container(
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(width: 12),
-                    
+
                     // Right side: Order button
                     SizedBox(
                       width: 100,
@@ -424,14 +540,10 @@ Container(
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        // FIX: Replaced withOpacity with withAlpha
-        color: Colors.black.withAlpha(102), // 0.4 opacity
-        borderRadius: BorderRadius.circular(8)
-      ),
-      child: Text(
-        text, 
-        style: const TextStyle(color: Colors.white, fontSize: 12)
-      ),
+          color: Colors.black.withAlpha(102), // 0.4 opacity
+          borderRadius: BorderRadius.circular(8)),
+      child: Text(text,
+          style: const TextStyle(color: Colors.white, fontSize: 12)),
     );
   }
 }

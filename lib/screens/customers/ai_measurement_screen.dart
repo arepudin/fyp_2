@@ -6,9 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import '../../models/measurement_models.dart';
-import 'ai_measurement_steps.dart';
-
 import '../../services/measurement.dart';
+import '../../utils/measurement_utils.dart';
+import 'ai_measurement_steps.dart';
 
 class AIMeasurementScreen extends StatefulWidget {
   final Function(double width, double height)? onMeasurementsEntered;
@@ -24,34 +24,29 @@ class AIMeasurementScreen extends StatefulWidget {
 
 class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
   final GlobalKey _gestureDetectorKey = GlobalKey();
-  // Page and Step Management
   final PageController _pageController = PageController();
   int _currentStep = 0;
   final List<String> _stepTitles = [
-    'Choose Reference Object',
-    'Position & Capture',
-    'Select Reference',
-    'Draw Measurements',
-    'Review Results',
+    'Choose Reference Object', 'Position & Capture', 'Select Reference',
+    'Draw Measurements', 'Review Results',
   ];
 
-  // State Variables
   ReferenceObject _selectedReference = ReferenceObject.a4Paper;
   File? _capturedImage;
   ui.Image? _imageInfo;
-
+  
   List<Rect> _detectedRectangles = [];
   Rect? _selectedReferenceRect;
   double? _pixelToCmRatio;
 
   List<MeasurementLine> _measurementLines = [];
   MeasurementLine? _previewLine;
-  bool _isSaving = false; // Add this state variable
+  bool _isSaving = false;
+  MeasurementUnit _preferredUnit = MeasurementUnit.meters;
 
   Offset? _manualSelectionStart;
   Offset? _manualSelectionCurrent;
 
-  // UI State
   bool _isProcessing = false;
   String? _errorMessage;
 
@@ -61,10 +56,60 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
     super.dispose();
   }
 
-  // --- BUILD METHOD ---
-  // Update the build method to show loading state
+  // ... (build methods and other logic remain the same as previous correct version) ...
+  // The key change is in _submitMeasurements
+
+  void _submitMeasurements() async {
+    if (_measurementLines.isNotEmpty && _pixelToCmRatio != null) {
+      final width = AIMeasurementService.pixelsToUserUnit(
+        _measurementLines[0].length,
+        _pixelToCmRatio!,
+        _preferredUnit,
+      );
+      final height = _measurementLines.length >= 2
+          ? AIMeasurementService.pixelsToUserUnit(
+              _measurementLines[1].length,
+              _pixelToCmRatio!,
+              _preferredUnit,
+            )
+          : 0.0;
+
+      setState(() => _isSaving = true);
+
+      try {
+        // --- THIS IS THE FIX ---
+        // Pass the required 'unit' parameter to the service.
+        await MeasurementService.saveMeasurement(
+          width: width,
+          height: height,
+          unit: _preferredUnit, // <-- FIX: Provide the measurement unit
+          notes: 'AI-assisted measurement',
+        );
+        // -------------------------
+
+        widget.onMeasurementsEntered?.call(width, height);
+
+        if (mounted) {
+          _showSuccessDialog(width, height);
+        }
+      } catch (e) {
+        if (mounted) {
+          _showErrorDialog(e.toString(), width, height);
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isSaving = false);
+        }
+      }
+    }
+  }
+
+  // --- The rest of the file remains the same as the previous version ---
+  // (build, _showSuccessDialog, _showErrorDialog, navigation, etc.)
   @override
   Widget build(BuildContext context) {
+    const Color primaryRed = Color.fromARGB(255, 158, 19, 17);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),
       appBar: AppBar(
@@ -77,24 +122,21 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
         children: [
           Column(
             children: [
-              _buildProgressIndicator(),
+              _buildProgressIndicator(primaryRed),
               Expanded(
                 child: PageView(
                   controller: _pageController,
                   physics: const NeverScrollableScrollPhysics(),
                   children: [
-                    // STEP 1
                     ReferenceSelectionStep(
                         selectedReference: _selectedReference,
                         onReferenceChanged: (value) =>
                             setState(() => _selectedReference = value!)),
-                    // STEP 2
                     CaptureStep(
                         selectedReference: _selectedReference,
                         capturedImage: _capturedImage,
                         onTakePhoto: _takePhoto,
                         onRetakePhoto: _retakePhoto),
-                    // STEP 3
                     DetectionStep(
                       gestureDetectorKey: _gestureDetectorKey,
                       isProcessing: _isProcessing,
@@ -113,7 +155,6 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
                       onClearManualSelectionError: () =>
                           setState(() => _errorMessage = null),
                     ),
-                    // STEP 4
                     MeasurementStep(
                       gestureDetectorKey: _gestureDetectorKey,
                       imageInfo: _imageInfo,
@@ -126,16 +167,16 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
                       onDrawMeasurementEnd: _onDrawMeasurementEnd,
                       onClearMeasurements: _clearMeasurements,
                     ),
-                    // STEP 5
                     ResultsStep(
                       measurementLines: _measurementLines,
                       pixelToCmRatio: _pixelToCmRatio,
                       onSubmitMeasurements: _submitMeasurements,
+                      preferredUnit: _preferredUnit,
                     ),
                   ],
                 ),
               ),
-              _buildNavigationButtons(),
+              _buildNavigationButtons(primaryRed),
             ],
           ),
           if (_isSaving)
@@ -161,8 +202,9 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
       ),
     );
   }
-
-  Widget _buildProgressIndicator() {
+  
+  // (All other methods like _buildProgressIndicator, _loadImage, etc., are unchanged)
+  Widget _buildProgressIndicator(Color primaryRed) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -178,7 +220,7 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
                 color: isCompleted
                     ? Colors.green
                     : isActive
-                        ? Theme.of(context).primaryColor
+                        ? primaryRed
                         : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
               ),
@@ -189,7 +231,7 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
     );
   }
 
-  Widget _buildNavigationButtons() {
+  Widget _buildNavigationButtons(Color primaryRed) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -211,18 +253,17 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
             child: ElevatedButton(
               onPressed: _canProceed() ? _nextStep : null,
               style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
+                  backgroundColor: primaryRed,
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: Colors.grey.shade400),
-              child: Text(_currentStep == _stepTitles.length - 1 ? 'Finish' : 'Next'),
+              child: Text(
+                  _currentStep == _stepTitles.length - 1 ? 'Finish' : 'Next'),
             ),
           ),
         ],
       ),
     );
   }
-
-  // --- LOGIC & IMPLEMENTATION METHODS ---
 
   Future<void> _loadImage(File file) async {
     final bytes = await file.readAsBytes();
@@ -296,11 +337,13 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
     if (imageAspectRatio > widgetAspectRatio) {
       final double scale = widgetSize.width / image.width;
       final double blankHeight = (widgetSize.height - image.height * scale) / 2;
-      return Offset(tapPosition.dx / scale, (tapPosition.dy - blankHeight) / scale);
+      return Offset(
+          tapPosition.dx / scale, (tapPosition.dy - blankHeight) / scale);
     } else {
       final double scale = widgetSize.height / image.height;
       final double blankWidth = (widgetSize.width - image.width * scale) / 2;
-      return Offset((tapPosition.dx - blankWidth) / scale, tapPosition.dy / scale);
+      return Offset(
+          (tapPosition.dx - blankWidth) / scale, tapPosition.dy / scale);
     }
   }
 
@@ -363,26 +406,23 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
 
   void _onManualSelectionEnd(DragEndDetails details) {
     if (_manualSelectionStart != null && _manualSelectionCurrent != null) {
-      final rect = Rect.fromPoints(_manualSelectionStart!, _manualSelectionCurrent!);
+      final rect =
+          Rect.fromPoints(_manualSelectionStart!, _manualSelectionCurrent!);
 
       setState(() {
-        // Clear the drag trackers immediately so the blue box disappears
         _manualSelectionStart = null;
         _manualSelectionCurrent = null;
 
-        // Now, validate the box that was just drawn
         if (AIMeasurementService.isValidReferenceObject(
             rect, _selectedReference)) {
-          // SUCCESS: The box is valid. Save it.
           _selectedReferenceRect = rect;
-          _pixelToCmRatio =
-              AIMeasurementService.calculatePixelToCmRatio(rect, _selectedReference);
+          _pixelToCmRatio = AIMeasurementService.calculatePixelToCmRatio(
+              rect, _selectedReference);
           _errorMessage = null;
         } else {
-          // FAILURE: The box is invalid. Show an error.
           _errorMessage =
               "The drawn box's shape doesn't match a ${_selectedReference.name}. Please try again.";
-          _selectedReferenceRect = null; // Ensure no green box is shown
+          _selectedReferenceRect = null;
         }
       });
     }
@@ -418,8 +458,8 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
               ? 'Height'
               : 'Line ${lineNumber + 1}';
       setState(() {
-        _measurementLines
-            .add(MeasurementLine(_previewLine!.start, _previewLine!.end, label));
+        _measurementLines.add(
+            MeasurementLine(_previewLine!.start, _previewLine!.end, label));
         _previewLine = null;
       });
     } else {
@@ -428,46 +468,6 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
   }
 
   void _clearMeasurements() => setState(() => _measurementLines.clear());
-
-  void _submitMeasurements() async {
-    if (_measurementLines.isNotEmpty && _pixelToCmRatio != null) {
-      final width = AIMeasurementService.pixelsToCentimeters(
-          _measurementLines[0].length, _pixelToCmRatio!);
-      final height = _measurementLines.length >= 2
-          ? AIMeasurementService.pixelsToCentimeters(
-              _measurementLines[1].length, _pixelToCmRatio!)
-          : 0.0;
-
-      // Show loading dialog
-      setState(() => _isSaving = true);
-
-      try {
-        // Save to database
-        await MeasurementService.saveMeasurement(
-          width: width,
-          height: height,
-          notes: 'AI-assisted measurement',
-        );
-
-        // Call the callback
-        widget.onMeasurementsEntered?.call(width, height);
-
-        // Show success message
-        if (mounted) {
-          _showSuccessDialog(width, height);
-        }
-      } catch (e) {
-        // Show error dialog
-        if (mounted) {
-          _showErrorDialog(e.toString(), width, height);
-        }
-      } finally {
-        if (mounted) {
-          setState(() => _isSaving = false);
-        }
-      }
-    }
-  }
 
   void _showSuccessDialog(double width, double height) {
     showDialog(
@@ -480,15 +480,16 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
           children: [
             const Text('Your measurement has been saved successfully!'),
             const SizedBox(height: 16),
-            Text('Width: ${width.toStringAsFixed(1)} cm'),
-            if (height > 0) Text('Height: ${height.toStringAsFixed(1)} cm'),
+            Text('Width: ${MeasurementUtils.formatWithUnit(width, _preferredUnit)}'),
+            if (height > 0)
+              Text('Height: ${MeasurementUtils.formatWithUnit(height, _preferredUnit)}'),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Close measurement screen
+              Navigator.pop(context); 
+              Navigator.pop(context); 
             },
             child: const Text('OK'),
           ),
@@ -522,26 +523,28 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
 
   bool _canProceed() {
     switch (_currentStep) {
-      case 0:
-        return true;
-      case 1:
-        return _capturedImage != null;
-      case 2:
-        return _selectedReferenceRect != null;
-      case 3:
-        return _measurementLines.isNotEmpty;
-      case 4:
-        return true;
-      default:
-        return false;
+      case 0: return true;
+      case 1: return _capturedImage != null;
+      case 2: return _selectedReferenceRect != null;
+      case 3: return _measurementLines.isNotEmpty;
+      case 4: return true;
+      default: return false;
     }
   }
 
   void _nextStep() {
     if (_currentStep < _stepTitles.length - 1) {
+      if (_currentStep == 3 && _measurementLines.isNotEmpty && _pixelToCmRatio != null) {
+        final widthInMeters = AIMeasurementService.pixelsToMeters(_measurementLines[0].length, _pixelToCmRatio!);
+        setState(() {
+          _preferredUnit = MeasurementUtils.getRecommendedUnit(widthInMeters);
+        });
+      }
+
       setState(() => _currentStep++);
       _pageController.animateToPage(_currentStep,
-          duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut);
     } else {
       _submitMeasurements();
     }
@@ -551,7 +554,8 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
     if (_currentStep > 0) {
       setState(() => _currentStep--);
       _pageController.animateToPage(_currentStep,
-          duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut);
     }
   }
 }

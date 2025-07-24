@@ -1,17 +1,11 @@
 // lib/screens/customers/manual_measurement_screen.dart
 
 import 'package:flutter/material.dart';
-
-// ASSUMPTION: You have these files in your project. Adjust the path if needed.
-import '../../utils/measurement_utils.dart'; // Contains MeasurementUnit, utils
-import 'ai_measurement_screen.dart'; // Contains AIMeasurementScreen
-// Add this import at the top
+import '../../utils/measurement_utils.dart';
+import 'ai_measurement_screen.dart';
 import '../../services/measurement.dart';
 
-// -----------------------------------------------------------------------------
-// SCREEN 1: The Main Selection Hub
-// This screen allows the user to choose between AI and Manual measurement.
-// -----------------------------------------------------------------------------
+// --- MeasurementMethodSelectionScreen remains the same ---
 class MeasurementMethodSelectionScreen extends StatelessWidget {
   final Function(double width, double height)? onMeasurementsEntered;
 
@@ -40,7 +34,7 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
             const Text(
               'Choose Your Measurement Method',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
@@ -51,18 +45,15 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16, color: Colors.black54),
             ),
             const SizedBox(height: 32),
-            // AI Measurement Option
             _buildMeasurementMethodCard(
               context: context,
               icon: Icons.camera_alt_outlined,
               title: 'AI-Assisted Measurement',
               subtitle: 'Use your camera for quick, accurate results',
-              badge: 'NEW',
               onTap: () => _openAIMeasurement(context),
               isRecommended: true,
             ),
             const SizedBox(height: 16),
-            // Manual Measurement Option
             _buildMeasurementMethodCard(
               context: context,
               icon: Icons.straighten,
@@ -99,7 +90,9 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: isRecommended ? Border.all(color: primaryRed, width: 2) : null,
+            border: isRecommended
+                ? Border.all(color: primaryRed, width: 2)
+                : null,
           ),
           child: Row(
             children: [
@@ -130,7 +123,8 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
                         if (badge != null) ...[
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
                               color: Colors.green,
                               borderRadius: BorderRadius.circular(12),
@@ -150,13 +144,15 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(color: Colors.black54, fontSize: 14),
+                      style:
+                          const TextStyle(color: Colors.black54, fontSize: 14),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
+              const Icon(Icons.arrow_forward_ios,
+                  color: Colors.grey, size: 16),
             ],
           ),
         ),
@@ -217,9 +213,7 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
   }
 }
 
-// -----------------------------------------------------------------------------
-// SCREEN 2: The Step-by-Step Manual Measurement Guide
-// -----------------------------------------------------------------------------
+// --- ManualMeasurementGuideScreen starts here ---
 class ManualMeasurementGuideScreen extends StatefulWidget {
   final Function(double width, double height)? onMeasurementsEntered;
 
@@ -229,61 +223,67 @@ class ManualMeasurementGuideScreen extends StatefulWidget {
   });
 
   @override
-  State<ManualMeasurementGuideScreen> createState() => _ManualMeasurementGuideScreenState();
+  State<ManualMeasurementGuideScreen> createState() =>
+      _ManualMeasurementGuideScreenState();
 }
 
-// Update the _ManualMeasurementGuideScreenState class:
-class _ManualMeasurementGuideScreenState extends State<ManualMeasurementGuideScreen> {
+class _ManualMeasurementGuideScreenState
+    extends State<ManualMeasurementGuideScreen> {
   final PageController _pageController = PageController();
   final TextEditingController _widthController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   int _currentPage = 0;
   MeasurementUnit _selectedUnit = MeasurementUnit.meters;
-  String? _validationError;
-  bool _isSaving = false; // Add this state variable
+  bool _isSaving = false;
 
   static const Color primaryRed = Color.fromARGB(255, 158, 19, 17);
 
   final List<MeasurementStep> _measurementSteps = [
     MeasurementStep(
       title: 'Prepare Your Tools',
-      description: 'You\'ll need a measuring tape or ruler for accurate measurements.',
+      description:
+          'You\'ll need a measuring tape or ruler for accurate measurements.',
       tips: [
         'Use a metal measuring tape for best accuracy.',
         'Have someone help you hold the tape steady.',
         'Ensure the tape is straight and not sagging.',
       ],
-      imageAsset: 'asset/measure_tape.jpeg',
+      imageAsset: 'asset/measure_tape.png',
     ),
     MeasurementStep(
       title: 'Measure Window Width',
-      description: 'Measure the width of your window from the inside edge of the frame to the other.',
+      description:
+          'Measure the width of your window from the inside edge of the frame to the other.',
       tips: [
         'Measure at the top, middle, and bottom.',
         'Use the smallest measurement to ensure a proper fit.',
         'Include the window frame in your measurement.',
       ],
-      imageAsset: 'asset/Width.jpeg',
+      imageAsset: 'asset/Width.png',
     ),
     MeasurementStep(
       title: 'Measure Window Height',
-      description: 'Measure the height from the top to the bottom of the window frame.',
+      description:
+          'Measure the height from the top to the bottom of the window frame.',
       tips: [
         'Measure at the left, center, and right sides.',
         'Use the smallest measurement for a proper fit.',
         'Measure from frame to frame, not glass to glass.',
       ],
-      imageAsset: 'asset/Height.jpeg',
+      imageAsset: 'asset/Height.png',
     ),
     MeasurementStep(
       title: 'Record Your Measurements',
-      description: 'Enter your measurements below and double-check for accuracy.',
+      description:
+          'Enter your measurements below and double-check for accuracy.',
       tips: [
         'Round to the nearest centimeter or 1/8 inch.',
         'Double-check your measurements before proceeding.',
         'Consider adding extra length for the curtain rod placement.',
       ],
+      // This asset path is now unused by the UI but kept for model consistency
       imageAsset: 'asset/guide_step4_record.png',
     ),
   ];
@@ -315,41 +315,81 @@ class _ManualMeasurementGuideScreenState extends State<ManualMeasurementGuideScr
   }
 
   void _validateAndSubmit() {
-    setState(() => _validationError = null);
-
-    final widthText = _widthController.text.trim();
-    final heightText = _heightController.text.trim();
-
-    if (widthText.isEmpty || heightText.isEmpty) {
-      setState(() => _validationError = 'Please enter both width and height.');
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    final width = double.tryParse(widthText);
-    final height = double.tryParse(heightText);
+    final width = double.tryParse(_widthController.text.trim());
+    final height = double.tryParse(_heightController.text.trim());
 
     if (width == null || height == null) {
-      setState(() => _validationError = 'Please enter valid numbers.');
       return;
     }
 
-    if (width <= 0 || height <= 0) {
-      setState(() => _validationError = 'Measurements must be greater than zero.');
-      return;
-    }
-
-    if (!MeasurementUtils.isRealisticWindowMeasurement(width, height, _selectedUnit)) {
-      setState(() => _validationError = 'These measurements seem unrealistic. Please double-check.');
-      return;
-    }
-
-    final warning = MeasurementUtils.getMeasurementWarning(width, height, _selectedUnit);
+    final warning =
+        MeasurementUtils.getMeasurementWarning(width, height, _selectedUnit);
     if (warning != null) {
       _showWarningDialog(width, height, warning);
       return;
     }
 
     _submitMeasurements(width, height);
+  }
+
+  void _submitMeasurements(double width, double height) async {
+    setState(() => _isSaving = true);
+    try {
+      await MeasurementService.saveMeasurement(
+        width: width,
+        height: height,
+        unit: _selectedUnit,
+        notes: 'Manual measurement',
+      );
+
+      widget.onMeasurementsEntered?.call(width, height);
+
+      if (mounted) {
+        _showSuccessDialog(width, height);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorDialog(e.toString(), width, height);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  void _showSuccessDialog(double width, double height) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Measurement Saved'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Your measurement has been saved successfully!'),
+            const SizedBox(height: 16),
+            Text(
+                'Width: ${MeasurementUtils.formatWithUnit(width, _selectedUnit)}'),
+            Text(
+                'Height: ${MeasurementUtils.formatWithUnit(height, _selectedUnit)}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              int popCount = 0;
+              Navigator.of(context).popUntil((_) => popCount++ >= 2);
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showWarningDialog(double width, double height, String warning) {
@@ -375,69 +415,6 @@ class _ManualMeasurementGuideScreenState extends State<ManualMeasurementGuideScr
     );
   }
 
-  // Update the submit measurements method
-  void _submitMeasurements(double width, double height) async {
-    setState(() => _isSaving = true);
-
-    try {
-      // Save to database using the original units
-      await MeasurementService.saveMeasurement(
-        width: width,
-        height: height,
-        unit: _selectedUnit,
-        notes: 'Manual measurement in ${_selectedUnit.name}',
-      );
-
-      // Call the callback with original units
-      if (widget.onMeasurementsEntered != null) {
-        widget.onMeasurementsEntered!(width, height);
-      }
-
-      // Show success message
-      if (mounted) {
-        _showSuccessDialog(width, height);
-      }
-    } catch (e) {
-      // Show error dialog
-      if (mounted) {
-        _showErrorDialog(e.toString(), width, height);
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
-    }
-  }
-
-  void _showSuccessDialog(double width, double height) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Measurement Saved'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Your measurement has been saved successfully!'),
-            const SizedBox(height: 16),
-            Text('Width: ${MeasurementUtils.formatWithUnit(width, _selectedUnit)}'),
-            Text('Height: ${MeasurementUtils.formatWithUnit(height, _selectedUnit)}'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Close guide screen
-              Navigator.pop(context); // Close selection screen
-            },
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showErrorDialog(String error, double width, double height) {
     showDialog(
       context: context,
@@ -452,7 +429,7 @@ class _ManualMeasurementGuideScreenState extends State<ManualMeasurementGuideScr
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              _submitMeasurements(width, height); // Retry
+              _submitMeasurements(width, height);
             },
             child: const Text('Retry'),
           ),
@@ -470,63 +447,43 @@ class _ManualMeasurementGuideScreenState extends State<ManualMeasurementGuideScr
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: Stack(
+      body: Column(
         children: [
-          Column(
-            children: [
-              _buildProgressIndicator(),
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  onPageChanged: (page) => setState(() => _currentPage = page),
-                  itemCount: _measurementSteps.length,
-                  itemBuilder: (context, index) {
-                    final step = _measurementSteps[index];
-                    return index == _measurementSteps.length - 1
-                        ? _buildMeasurementInputPage(step)
-                        : _buildGuidePage(step);
-                  },
-                ),
-              ),
-              _buildNavigationButtons(),
-            ],
-          ),
-          if (_isSaving)
-            Container(
-              color: Colors.black54,
-              child: const Center(
-                child: Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 16),
-                        Text('Saving measurement...'),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+          _buildProgressIndicator(),
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              onPageChanged: (page) => setState(() => _currentPage = page),
+              itemCount: _measurementSteps.length,
+              itemBuilder: (context, index) {
+                final step = _measurementSteps[index];
+                return index == _measurementSteps.length - 1
+                    ? _buildMeasurementInputPage(step)
+                    : _buildGuidePage(step);
+              },
             ),
+          ),
         ],
       ),
+      bottomSheet: _buildNavigationButtons(),
     );
   }
 
   Widget _buildProgressIndicator() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         children: List.generate(_measurementSteps.length, (index) {
           return Expanded(
             child: Container(
               height: 4,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
+              margin: EdgeInsets.only(
+                  right: index < _measurementSteps.length - 1 ? 4 : 0),
               decoration: BoxDecoration(
-                color: index <= _currentPage ? primaryRed : Colors.grey.shade300,
+                color:
+                    index <= _currentPage ? primaryRed : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -537,89 +494,80 @@ class _ManualMeasurementGuideScreenState extends State<ManualMeasurementGuideScr
   }
 
   Widget _buildGuidePage(MeasurementStep step) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            step.title,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          Container(
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+      children: [
+        Text(
+          step.title,
+          style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87),
+        ),
+        const SizedBox(height: 24),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.asset(
+            step.imageAsset,
             height: 200,
             width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200, // Background color while image loads
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                step.imageAsset, // Use the image path from our model
-                fit: BoxFit.cover, // Makes the image fill the container
-                errorBuilder: (context, error, stackTrace) {
-                  return const Center(
-                    child: Icon(
-                      Icons.image_not_supported_outlined,
-                      size: 64,
-                      color: Colors.grey,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(step.description, style: const TextStyle(fontSize: 16, height: 1.5)),
-          const SizedBox(height: 24),
-          const Text('Tips:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryRed)),
-          const SizedBox(height: 12),
-          ...step.tips.map((tip) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.check_circle, size: 20, color: primaryRed),
-                    const SizedBox(width: 12),
-                    Expanded(child: Text(tip, style: const TextStyle(fontSize: 14, height: 1.4))),
-                  ],
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                height: 200,
+                color: Colors.grey.shade200,
+                child: const Center(
+                  child: Icon(
+                    Icons.image_not_supported_outlined,
+                    size: 64,
+                    color: Colors.grey,
+                  ),
                 ),
-              )),
-        ],
-      ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 24),
+        Text(step.description,
+            style: const TextStyle(fontSize: 16, height: 1.5)),
+        const SizedBox(height: 24),
+        const Text('Tips:',
+            style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold, color: primaryRed)),
+        const SizedBox(height: 12),
+        ...step.tips.map((tip) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.check_circle, size: 22, color: primaryRed),
+                  const SizedBox(width: 12),
+                  Expanded(
+                      child: Text(tip,
+                          style:
+                              const TextStyle(fontSize: 15, height: 1.4))),
+                ],
+              ),
+            )),
+      ],
     );
   }
 
-  // Update the placeholder text in the measurement input page
   Widget _buildMeasurementInputPage(MeasurementStep step) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Form(
+      key: _formKey,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
         children: [
-          Text(step.title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                step.imageAsset,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Center(child: Icon(Icons.image_not_supported_outlined, size: 64, color: Colors.grey)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(step.description, style: const TextStyle(fontSize: 16, height: 1.5)),
+          Text(step.title,
+              style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87)),
+          const SizedBox(height: 24),
+          // --- IMAGE BOX REMOVED FROM THIS PAGE ---
+          Text(step.description,
+              style: const TextStyle(fontSize: 16, height: 1.5)),
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.all(16),
@@ -631,78 +579,77 @@ class _ManualMeasurementGuideScreenState extends State<ManualMeasurementGuideScr
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Measurement Unit', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 12),
+                const Text('Measurement Unit',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
                         child: RadioListTile<MeasurementUnit>(
                             title: const Text('Meters'),
+                            contentPadding: EdgeInsets.zero,
                             value: MeasurementUnit.meters,
                             groupValue: _selectedUnit,
                             activeColor: primaryRed,
-                            onChanged: (v) => setState(() => _selectedUnit = v!))),
+                            onChanged: (v) =>
+                                setState(() => _selectedUnit = v!))),
                     Expanded(
                         child: RadioListTile<MeasurementUnit>(
                             title: const Text('Inches'),
+                            contentPadding: EdgeInsets.zero,
                             value: MeasurementUnit.inches,
                             groupValue: _selectedUnit,
                             activeColor: primaryRed,
-                            onChanged: (v) => setState(() => _selectedUnit = v!))),
+                            onChanged: (v) =>
+                                setState(() => _selectedUnit = v!))),
                   ],
                 ),
               ],
             ),
           ),
           const SizedBox(height: 20),
-          _buildMeasurementInput(
-            'Window Width',
-            _widthController,
-            _selectedUnit == MeasurementUnit.meters ? 'e.g., 1.5 (meters)' : 'e.g., 60 (inches)',
-          ),
+          _buildMeasurementInput('Window Width', _widthController),
           const SizedBox(height: 16),
-          _buildMeasurementInput(
-            'Window Height',
-            _heightController,
-            _selectedUnit == MeasurementUnit.meters ? 'e.g., 2.1 (meters)' : 'e.g., 84 (inches)',
-          ),
-          if (_validationError != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.shade200)),
-              child: Row(
-                children: [
-                  Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(_validationError!, style: TextStyle(color: Colors.red.shade700))),
-                ],
-              ),
-            ),
-          ],
+          _buildMeasurementInput('Window Height', _heightController),
         ],
       ),
     );
   }
 
-  Widget _buildMeasurementInput(String label, TextEditingController controller, String hint) {
+  Widget _buildMeasurementInput(
+      String label, TextEditingController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        Text(label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
-            hintText: hint,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: primaryRed)),
-          ),
+              hintText: _selectedUnit == MeasurementUnit.meters
+                  ? 'e.g., 1.5'
+                  : 'e.g., 60',
+              hintStyle: TextStyle(color: Colors.grey.shade400),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: primaryRed, width: 2)),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade400))),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter a value.';
+            }
+            if (double.tryParse(value) == null) {
+              return 'Please enter a valid number.';
+            }
+            return null;
+          },
         ),
       ],
     );
@@ -710,10 +657,15 @@ class _ManualMeasurementGuideScreenState extends State<ManualMeasurementGuideScr
 
   Widget _buildNavigationButtons() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, -2))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, -2))
+        ],
       ),
       child: Row(
         children: [
@@ -722,22 +674,41 @@ class _ManualMeasurementGuideScreenState extends State<ManualMeasurementGuideScr
               child: OutlinedButton(
                 onPressed: _previousPage,
                 style: OutlinedButton.styleFrom(
+                  foregroundColor: primaryRed,
                   side: const BorderSide(color: primaryRed),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Previous'),
+                child: const Text('Previous',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
           if (_currentPage > 0) const SizedBox(width: 16),
           Expanded(
             child: ElevatedButton(
-              onPressed: _currentPage == _measurementSteps.length - 1 ? _validateAndSubmit : _nextPage,
+              onPressed: _currentPage == _measurementSteps.length - 1
+                  ? (_isSaving ? null : _validateAndSubmit)
+                  : _nextPage,
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryRed,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text(_currentPage == _measurementSteps.length - 1 ? 'Submit' : 'Next'),
+              child: _isSaving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : Text(
+                      _currentPage == _measurementSteps.length - 1
+                          ? 'Submit'
+                          : 'Next',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
             ),
           ),
         ],
@@ -746,9 +717,7 @@ class _ManualMeasurementGuideScreenState extends State<ManualMeasurementGuideScr
   }
 }
 
-// -----------------------------------------------------------------------------
-// HELPER MODEL CLASS for the Manual Guide
-// -----------------------------------------------------------------------------
+// Helper model class for the guide steps
 class MeasurementStep {
   final String title;
   final String description;

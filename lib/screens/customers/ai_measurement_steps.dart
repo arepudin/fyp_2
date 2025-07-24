@@ -431,19 +431,18 @@ class MeasurementStep extends StatelessWidget {
 }
 
 // --- STEP 5: REVIEW RESULTS ---
-// Update the ResultsStep class build method
 class ResultsStep extends StatelessWidget {
   final List<MeasurementLine> measurementLines;
   final double? pixelToCmRatio;
   final VoidCallback onSubmitMeasurements;
-  final MeasurementUnit preferredUnit; // Add this parameter
+  final MeasurementUnit preferredUnit; // The unit for displaying results
 
   const ResultsStep({
     super.key,
     required this.measurementLines,
     this.pixelToCmRatio,
     required this.onSubmitMeasurements,
-    this.preferredUnit = MeasurementUnit.meters, // Default to meters
+    required this.preferredUnit, // Make it explicitly required
   });
 
   @override

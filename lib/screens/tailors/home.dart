@@ -15,7 +15,10 @@ class _TailorDashboardScreenState extends State<TailorDashboardScreen> with Sing
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    // --- MODIFICATION START ---
+    // The length is now 2 since we removed the "Customer Chats" tab.
+    _tabController = TabController(length: 2, vsync: this);
+    // --- MODIFICATION END ---
   }
 
   Future<void> _signOut() async {
@@ -33,15 +36,18 @@ class _TailorDashboardScreenState extends State<TailorDashboardScreen> with Sing
         actions: [IconButton(onPressed: _signOut, icon: const Icon(Icons.logout))],
         bottom: TabBar(
           controller: _tabController,
+          // --- MODIFICATION START ---
+          // Removed the "Customer Chats" tab.
           tabs: const [
             Tab(icon: Icon(Icons.receipt_long), text: 'Manage Orders'),
             Tab(icon: Icon(Icons.inventory_2), text: 'Manage Stock'),
-            Tab(icon: Icon(Icons.chat), text: 'Customer Chats'),
           ],
+          // --- MODIFICATION END ---
         ),
       ),
       body: TabBarView(
         controller: _tabController,
+        // The children now correctly correspond to the 2 tabs.
         children: const [
           ManageOrdersView(),
           ManageStockView(),
@@ -62,13 +68,11 @@ class ManageOrdersView extends StatefulWidget {
 
 class _ManageOrdersViewState extends State<ManageOrdersView> {
   Future<List<Map<String, dynamic>>> _fetchOrders() async {
-    // --- MODIFICATION START ---
-    // Query the new 'orders_with_details' view instead of the original tables.
+    // This now works because the 'orders_with_details' view exists.
     final response = await supabase
         .from('orders_with_details') // Query the view
         .select() // Select all columns from the view
         .order('order_date', ascending: false);
-    // --- MODIFICATION END ---
     return List<Map<String, dynamic>>.from(response);
   }
   
@@ -118,7 +122,6 @@ class _ManageOrdersViewState extends State<ManageOrdersView> {
           itemCount: orders.length,
           itemBuilder: (context, index) {
             final order = orders[index];
-            // --- MODIFICATION START ---
             // Access the data directly from the "flat" structure of the view.
             return Card(
               margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -131,7 +134,6 @@ class _ManageOrdersViewState extends State<ManageOrdersView> {
                 onTap: () => _showStatusDialog(order['id'], order['status']),
               ),
             );
-            // --- MODIFICATION END ---
           },
         );
       },

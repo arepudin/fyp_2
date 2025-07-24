@@ -76,14 +76,14 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-      - lib/asset/placeholder1.png
-      - lib/asset/placeholder2.png
-      - lib/asset/placeholder3.png
-      - lib/asset/app_icon.svg
-      - lib/asset/SABA CURTAIN LOGO.jpg
-      - lib/asset/measure tape.jpeg
-      - lib/asset/Width.jpeg
-      - lib/asset/Height.jpeg
+      - asset/placeholder1.png
+      - asset/placeholder2.png
+      - asset/placeholder3.png
+      - asset/app_icon.svg
+      - asset/SABA CURTAIN LOGO.jpg
+      - asset/measure_tape.png
+      - asset/Width.png
+      - asset/Height.png
 
 
 flutter_launcher_icons:

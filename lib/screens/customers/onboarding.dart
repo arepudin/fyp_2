@@ -16,17 +16,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<Map<String, String>> onboardingData = [
     {
-      'image': 'lib/asset/placeholder1.png',
+      'image': 'asset/placeholder1.png',
       'title': 'Measure Your Windows',
       'description': 'Step 1: Get accurate measurements for a perfect, custom fit.'
     },
     {
-      'image': 'lib/asset/placeholder2.png',
+      'image': 'asset/placeholder2.png',
       'title': 'Find Your Perfect Style',
       'description': 'Step 2: Explore our curated collection and find the best curtains for you.'
     },
     {
-      'image': 'lib/asset/SABA CURTAIN LOGO.jpg',
+      'image': 'asset/SABA CURTAIN LOGO.jpg',
       'title': 'Place Your Order',
       'description': 'Step 3: A few simple clicks to bring beautiful design into your home.'
     },
