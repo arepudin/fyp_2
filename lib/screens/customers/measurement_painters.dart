@@ -134,7 +134,7 @@ class MeasurementPainter extends CustomPainter {
     }
     final measurement = AIMeasurementService.pixelsToUserUnit(line.length, pixelToCmRatio, unit);
     final unitLabel = MeasurementUtils.formatWithUnit(measurement, unit);
-    final textSpan = TextSpan(text: '${line.label}: ${measurement.toStringAsFixed(1)} cm', style: style);
+    final textSpan = TextSpan(text: '${line.label}: ${measurement.toStringAsFixed(1)} m', style: style);
     final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr)..layout();
     final midX = (line.start.x + line.end.x) / 2;
     final midY = (line.start.y + line.end.y) / 2;

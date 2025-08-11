@@ -49,6 +49,7 @@ class AIMeasurementService {
   // =======================================================================
   // ===             CORRECTED OpenCV-BASED DETECTION METHOD             ===
   // =======================================================================
+
   static Future<List<Rect>> detectRectangles(String imagePath) async {
     final image = cv.imread(imagePath);
     if (image.isEmpty) {
@@ -57,8 +58,8 @@ class AIMeasurementService {
     }
 
     List<Rect> foundRectangles = [];
-
     cv.Mat? gray, blurred, edges;
+    
     // The type of contours is a record containing the contours and hierarchy
     (cv.Contours, cv.VecVec4i)? contoursRecord;
     try {

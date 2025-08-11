@@ -103,7 +103,7 @@ class _ManageOrdersViewState extends State<ManageOrdersView> {
   Future<void> _updateOrderStatus(String orderId, String newStatus) async {
     try {
       await supabase.from('orders').update({'status': newStatus}).eq('id', orderId);
-      
+
       final index = _orders.indexWhere((order) => order['id'] == orderId);
       if (index != -1) {
         setState(() {
