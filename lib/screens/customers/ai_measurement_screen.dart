@@ -56,9 +56,6 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
     super.dispose();
   }
 
-  // ... (build methods and other logic remain the same as previous correct version) ...
-  // The key change is in _submitMeasurements
-
   void _submitMeasurements() async {
     if (_measurementLines.isNotEmpty && _pixelToCmRatio != null) {
       final width = AIMeasurementService.pixelsToUserUnit(
@@ -77,12 +74,11 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
       setState(() => _isSaving = true);
 
       try {
-        // --- THIS IS THE FIX ---
         // Pass the required 'unit' parameter to the service.
         await MeasurementService.saveMeasurement(
           width: width,
           height: height,
-          unit: _preferredUnit, // <-- FIX: Provide the measurement unit
+          unit: _preferredUnit,
           notes: 'AI-assisted measurement',
         );
         // -------------------------
@@ -104,8 +100,6 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
     }
   }
 
-  // --- The rest of the file remains the same as the previous version ---
-  // (build, _showSuccessDialog, _showErrorDialog, navigation, etc.)
   @override
   Widget build(BuildContext context) {
     const Color primaryRed = Color.fromARGB(255, 158, 19, 17);
@@ -203,7 +197,6 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
     );
   }
   
-  // (All other methods like _buildProgressIndicator, _loadImage, etc., are unchanged)
   Widget _buildProgressIndicator(Color primaryRed) {
     return Container(
       padding: const EdgeInsets.all(16),

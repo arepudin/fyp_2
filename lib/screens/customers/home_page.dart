@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fyp_2/screens/customers/measurement_guide_screen.dart';
+import 'package:fyp_2/screens/customers/manual_measurement.dart';
 import '../../constants/supabase.dart';
 import '../sign_in.dart';
 import 'curtain_preference.dart';

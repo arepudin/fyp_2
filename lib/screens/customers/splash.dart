@@ -22,7 +22,6 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _redirect() async {
-    // This slight delay ensures the widget is fully built before navigating.
     await Future.delayed(Duration.zero);
     if (!mounted) return;
 
@@ -63,8 +62,6 @@ class _SplashScreenState extends State<SplashScreen> {
       }
 
     } catch (error) {
-      // This error often happens if a user signs up but hasn't created a profile yet.
-      // We send them to the profile setup screen.
       debugPrint("Redirect Error: Profile not found for new user. $error");
       Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const ProfileSetupScreen()));

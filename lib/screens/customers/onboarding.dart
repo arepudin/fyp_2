@@ -1,7 +1,9 @@
-// lib/screens/customers/onboarding_screen.dart
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../sign_in.dart';
+import 'package:fyp_2/config/app_config.dart';
+import 'package:fyp_2/config/app_strings.dart';
+import 'package:fyp_2/config/app_sizes.dart';
+import 'package:fyp_2/screens/sign_in.dart'; // Make sure this path is correct
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -14,107 +16,74 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<Map<String, String>> onboardingData = [
-    {
-      'image': 'asset/placeholder1.png',
-      'title': 'Measure Your Windows',
-      'description': 'Step 1: Get accurate measurements for a perfect, custom fit.'
-    },
-    {
-      'image': 'asset/placeholder2.png',
-      'title': 'Find Your Perfect Style',
-      'description': 'Step 2: Explore our curated collection and find the best curtains for you.'
-    },
-    {
-      'image': 'asset/SABA CURTAIN LOGO.jpg',
-      'title': 'Place Your Order',
-      'description': 'Step 3: A few simple clicks to bring beautiful design into your home.'
-    },
+  static final List<Map<String, String>> onboardingData = [
+    {'image': AppConfig.onboardingImage1, 'title': AppStrings.onboarding1Title, 'description': AppStrings.onboarding1Desc},
+    {'image': AppConfig.onboardingImage2, 'title': AppStrings.onboarding2Title, 'description': AppStrings.onboarding2Desc},
+    {'image': AppConfig.companyLogoPath, 'title': AppStrings.onboarding3Title, 'description': AppStrings.onboarding3Desc},
   ];
 
   Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
-    // *** THE CRITICAL FIX IS HERE: Use the correct key ***
     await prefs.setBool('onboarding_complete', true);
 
     if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const GoogleSignInScreen()),
-      );
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const GoogleSignInScreen()));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryRed = Color.fromARGB(255, 158, 19, 17);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [
-            // Skip Button
             Align(
               alignment: Alignment.topRight,
               child: TextButton(
                 onPressed: _completeOnboarding,
-                child: const Text("Skip", style: TextStyle(color: Colors.grey)),
+                child: const Text(AppStrings.skip, style: TextStyle(color: Colors.grey)),
               ),
             ),
-            // PageView
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
                 itemCount: onboardingData.length,
-                onPageChanged: (index) {
-                  setState(() => _currentPage = index);
-                },
-                itemBuilder: (context, index) {
-                  final item = onboardingData[index];
-                  return _buildOnboardingPage(
-                    image: item['image']!,
-                    title: item['title']!,
-                    description: item['description']!,
-                  );
-                },
+                onPageChanged: (index) => setState(() => _currentPage = index),
+                itemBuilder: (_, index) => _buildOnboardingPage(
+                  image: onboardingData[index]['image']!,
+                  title: onboardingData[index]['title']!,
+                  description: onboardingData[index]['description']!,
+                  context: context,
+                ),
               ),
             ),
-            // Indicator
-            _buildScrollIndicator(primaryRed),
-            const SizedBox(height: 20),
-            // Navigation Buttons
-            _buildNavigationButtons(primaryRed),
-            const SizedBox(height: 40),
+            _buildScrollIndicator(theme.colorScheme.primary),
+            gapH20,
+            _buildNavigationButtons(theme),
+            gapH40,
           ],
         ),
       ),
     );
   }
 
-  Widget _buildOnboardingPage({
-    required String image,
-    required String title,
-    required String description,
-  }) {
+  Widget _buildOnboardingPage({ required String image, required String title, required String description, required BuildContext context}) {
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40.0),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p40),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Image.asset(image, height: 300),
-          const SizedBox(height: 40),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.black87),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            description,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, color: Colors.black54, height: 1.5),
-          ),
+          gapH40,
+          // --- FIX HERE ---
+          Text(title, textAlign: TextAlign.center, style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          gapH16,
+          // --- FIX HERE ---
+          Text(description, textAlign: TextAlign.center, style: textTheme.bodyLarge?.copyWith(height: 1.5)),
         ],
       ),
     );
@@ -127,55 +96,39 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         onboardingData.length,
         (index) => AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          margin: const EdgeInsets.symmetric(horizontal: 4.0),
-          height: 8.0,
-          width: _currentPage == index ? 24.0 : 8.0,
+          margin: const EdgeInsets.symmetric(horizontal: AppSizes.p4),
+          height: AppSizes.p8,
+          width: _currentPage == index ? AppSizes.p24 : AppSizes.p8,
           decoration: BoxDecoration(
             color: _currentPage == index ? activeColor : Colors.grey.shade300,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSizes.p12),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildNavigationButtons(Color primaryRed) {
-    final bool isLastPage = _currentPage == onboardingData.length - 1;
-
+  Widget _buildNavigationButtons(ThemeData theme) {
+    final isLastPage = _currentPage == onboardingData.length - 1;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
       child: isLastPage
           ? ElevatedButton(
               onPressed: _completeOnboarding,
-              style: ElevatedButton.styleFrom(
-                // Use the theme's default style by not specifying anything extra
-              ),
-              child: const Text("GET STARTED"),
+              child: const Text(AppStrings.getStarted),
             )
           : Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 TextButton(
-                  onPressed: () {
-                    _pageController.previousPage(
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeInOut,
-                    );
-                  },
+                  onPressed: () => _pageController.previousPage(duration: const Duration(milliseconds: 400), curve: Curves.easeInOut),
                   style: TextButton.styleFrom(foregroundColor: Colors.grey),
-                  child: const Text("Back", style: TextStyle(fontSize: 16)),
+                  child: const Text(AppStrings.back, style: TextStyle(fontSize: 16)),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    _pageController.nextPage(
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeInOut,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(120, 50),
-                  ),
-                  child: const Text("Next", style: TextStyle(fontSize: 16)),
+                  onPressed: () => _pageController.nextPage(duration: const Duration(milliseconds: 400), curve: Curves.easeInOut),
+                  style: theme.elevatedButtonTheme.style?.copyWith(minimumSize: MaterialStateProperty.all(const Size(120, 50))),
+                  child: const Text(AppStrings.next, style: TextStyle(fontSize: 16)),
                 ),
               ],
             ),

@@ -1,5 +1,4 @@
 // lib/screens/customers/widgets/ai_measurement_steps.dart
-
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -435,14 +434,14 @@ class ResultsStep extends StatelessWidget {
   final List<MeasurementLine> measurementLines;
   final double? pixelToCmRatio;
   final VoidCallback onSubmitMeasurements;
-  final MeasurementUnit preferredUnit; // The unit for displaying results
+  final MeasurementUnit preferredUnit;
 
   const ResultsStep({
     super.key,
     required this.measurementLines,
     this.pixelToCmRatio,
     required this.onSubmitMeasurements,
-    required this.preferredUnit, // Make it explicitly required
+    required this.preferredUnit,
   });
 
   @override

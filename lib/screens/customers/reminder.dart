@@ -1,86 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'home_page.dart'; // Make sure this path is correct
+import 'package:fyp_2/config/app_config.dart';
+import 'package:fyp_2/config/app_strings.dart';
+import 'package:fyp_2/config/app_sizes.dart';
+import 'home_page.dart';
 
 class ReminderScreen extends StatelessWidget {
   const ReminderScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       body: Container(
         decoration: BoxDecoration(
           border: Border.all(
-            color: const Color(0xFFF9D1D1),
-            width: 8,
+            color: colorScheme.primary.withOpacity(0.2),
+            width: AppSizes.p8,
           ),
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(AppSizes.p24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Align(
                   alignment: Alignment.topLeft,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+                    icon: Icon(Icons.arrow_back_ios, color: colorScheme.onSurface),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ),
-                const SizedBox(height: 20),
-                SvgPicture.asset(
-                  'lib/asset/app_icon.svg', // Make sure this path is correct
-                  height: 180,
-                ),
-                const SizedBox(height: 40),
-                const Text(
-                  'Remainder',
-                  style: TextStyle(
+                gapH20,
+                SvgPicture.asset(AppConfig.appIconPath, height: 180),
+                gapH40,
+                Text(
+                  AppStrings.reminderTitle,
+                  style: textTheme.displayMedium?.copyWith(
                     fontFamily: 'serif',
-                    fontSize: 42,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: colorScheme.onSurface.withOpacity(0.87),
                   ),
                 ),
-                const SizedBox(height: 30),
-                const Text(
-                  "It looks like you're outside our delivery zone. To keep our curtains in top shape, we only offer in-store pickup. \n\nAre you still interested in placing an order?",
+                gapH30,
+                Text(
+                  AppStrings.reminderMessage,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black54,
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.6),
                     height: 1.5,
                   ),
                 ),
-                const Spacer(), // Pushes the button to the bottom
+                const Spacer(),
                 ElevatedButton(
                   onPressed: () {
-                    // User acknowledges and proceeds to the app's home page
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(builder: (_) => const HomePage()),
                       (route) => false,
                     );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFC86462),
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 12, horizontal: 60),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text(
-                    'Next',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: const Text(AppStrings.next),
                 ),
-                const SizedBox(height: 20),
+                gapH20,
               ],
             ),
           ),

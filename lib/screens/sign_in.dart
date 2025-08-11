@@ -1,9 +1,11 @@
-// lib/screens/google_signin_screen.dart
 import 'package:flutter/material.dart';
 import 'package:fyp_2/screens/customers/splash.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'customers/profile_setup.dart';
+import 'package:fyp_2/config/app_config.dart';
+import 'package:fyp_2/config/app_strings.dart';
+import 'package:fyp_2/config/app_sizes.dart';
+import 'package:fyp_2/screens/customers/profile_setup.dart'; // Ensure path is correct
 import 'package:flutter_svg/flutter_svg.dart';
 
 class GoogleSignInScreen extends StatefulWidget {
@@ -18,21 +20,20 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
 
   Future<void> _checkAndNavigateUser(BuildContext context, User user) async {
     try {
-      // Check if user has completed profile setup
       final response = await Supabase.instance.client
           .from('user_profiles')
           .select('*')
           .eq('user_id', user.id)
           .maybeSingle();
 
+      if (!mounted) return;
+
       if (response == null) {
-        // User hasn't completed profile setup, navigate to profile setup
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const ProfileSetupScreen()),
         );
       } else {
-        // User has completed profile setup, navigate to home page
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const SplashScreen()),
@@ -40,7 +41,7 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
       }
     } catch (error) {
       debugPrint('Error checking user profile: $error');
-      // If there's an error, default to profile setup to be safe
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const ProfileSetupScreen()),
@@ -49,149 +50,94 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
   }
 
   Future<void> _signInWithGoogle(BuildContext context) async {
-    final googleSignIn = GoogleSignIn(
-      serverClientId: '619873992295-gi2hlqn52e30r0dnkskq8th6qo12d1kr.apps.googleusercontent.com',
-      scopes: [
-        'email',
-        'profile',
-        'openid',
-      ],
-    );
+    // Use the client ID from AppConfig
+    final googleSignIn = GoogleSignIn(serverClientId: AppConfig.googleWebAppClientId);
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
-      // Clear any existing sign-in state
       await googleSignIn.signOut();
-      
-      // Start the Google Sign-In flow
       final googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
-        // User canceled the sign-in
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) setState(() => _isLoading = false);
         return;
       }
-
-      debugPrint('Google User: ${googleUser.email}');
-
-      // Get the authentication tokens
       final googleAuth = await googleUser.authentication;
-      
-      debugPrint('Access Token: ${googleAuth.accessToken != null ? 'Present' : 'Missing'}');
-      debugPrint('ID Token: ${googleAuth.idToken != null ? 'Present' : 'Missing'}');
-
       final accessToken = googleAuth.accessToken;
       final idToken = googleAuth.idToken;
 
       if (accessToken == null || idToken == null) {
-        throw Exception('Failed to obtain Google authentication tokens. Please check your configuration.');
+        throw Exception('Failed to obtain Google authentication tokens.');
       }
 
-      // Sign in to Supabase using the Google tokens
       final response = await Supabase.instance.client.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
         accessToken: accessToken,
       );
+      
+      if (context.mounted) await _checkAndNavigateUser(context, response.user!);
 
-      debugPrint('Supabase sign-in successful: ${response.user?.email}');
-
-      // Check if user has completed profile setup
-      if (context.mounted) {
-        await _checkAndNavigateUser(context, response.user!);
-      }
     } catch (error) {
-      debugPrint("Google Sign-In Error: $error");
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error signing in: $error"),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('${AppStrings.errorSigningIn}$error'),
+          // Use the theme's error color for consistency
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ));
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // App Logo
-              SvgPicture.asset(
-                'lib/asset/app_icon.svg',
-                height: 300,
-                width: 300,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(height: 20),
-
-              // Welcome Title
-              const Text(
-                'Welcome to Tailormate',
+              SvgPicture.asset(AppConfig.appIconPath, height: 300, fit: BoxFit.contain),
+              gapH20,
+              Text(
+                '${AppStrings.welcomeTo} ${AppConfig.appName}',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+                // Use a standard text style from your theme
+                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 16),
-
-              // Subtitle
-              const Text(
-                'Sign in with Google to continue',
+              gapH16,
+              Text(
+                AppStrings.signInToContinue,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
-                ),
+                style: textTheme.bodyLarge?.copyWith(color: Colors.black54),
               ),
-              const SizedBox(height: 40),
-
-              // Sign In Button
+              gapH40,
               ElevatedButton.icon(
+                // The style is fully inherited from ThemeConfig
                 onPressed: _isLoading ? null : () => _signInWithGoogle(context),
-                icon: Icon(
-                  _isLoading ? Icons.lock_clock : Icons.account_box,
-                  color: Colors.white,
-                ),
+                icon: _isLoading
+                    ? Container() // Hide icon when loading
+                    // Icon color will be inherited from the button's foregroundColor
+                    : const Icon(Icons.login),
                 label: _isLoading
                     ? const SizedBox(
-                        width: 16,
-                        height: 16,
+                        width: 20,
+                        height: 20,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
                           strokeWidth: 2,
+                          // The color is inherited from the button's foregroundColor
+                          color: Colors.white,
                         ),
                       )
-                    : const Text('Sign in with Google'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
+                    : const Text(AppStrings.signInWithGoogle),
               ),
             ],
           ),

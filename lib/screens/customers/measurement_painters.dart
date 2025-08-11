@@ -2,11 +2,9 @@
 
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:fyp_2/services/ai_measurement.dart'; // Ensure this path is correct
+import 'package:fyp_2/services/ai_measurement.dart';
 import 'package:fyp_2/utils/measurement_utils.dart';
-import '../../../models/measurement_models.dart'; // Ensure this path is correct
-
-// lib/screens/customers/widgets/measurement_painters.dart
+import '../../../models/measurement_models.dart';
 
 class RectangleOverlayPainter extends CustomPainter {
   final ui.Image imageInfo;
@@ -25,7 +23,6 @@ class RectangleOverlayPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // --- (The scaling logic at the top remains the same) ---
     final imageAspectRatio = imageInfo.width / imageInfo.height;
     final canvasAspectRatio = size.width / size.height;
     double scale;
@@ -41,8 +38,6 @@ class RectangleOverlayPainter extends CustomPainter {
     canvas.scale(scale);
 
     final paint = Paint()..style = PaintingStyle.stroke..strokeWidth = 3 / scale;
-    
-    // --- START: CORRECTED DRAWING LOGIC ---
 
     // 1. Draw all auto-detected rectangles in red.
     paint.color = Colors.red;
@@ -68,7 +63,6 @@ class RectangleOverlayPainter extends CustomPainter {
       final Path dashedPath = dashPath(path, dashArray: CircularIntervalList<double>([10.0, 5.0]));
       canvas.drawPath(dashedPath, paint);
     }
-    // --- END: CORRECTED DRAWING LOGIC ---
   }
 
   @override

@@ -1,10 +1,11 @@
-// File: profile_setup_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import '../../constants/supabase.dart'; // Make sure this path is correct
-import 'home_page.dart'; // Make sure this path is correct
-import 'reminder.dart'; // Import the new reminder screen file
+import 'package:fyp_2/config/app_config.dart';
+import 'package:fyp_2/config/app_strings.dart';
+import 'package:fyp_2/config/app_sizes.dart';
+import 'package:fyp_2/constants/supabase.dart';
+import 'package:fyp_2/screens/customers/home_page.dart';
+import 'package:fyp_2/screens/customers/reminder.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -35,7 +36,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
 
     try {
@@ -46,40 +46,22 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       final phoneNumber = _phoneController.text.trim();
       final address = _addressController.text.trim();
 
-      // Save to user_profiles table
       await supabase.from('user_profiles').upsert({
-        'user_id': user.id,
-        'email': user.email,
-        'full_name': fullName,
-        'phone_number': phoneNumber,
-        'address': address,
-        'updated_at': DateTime.now().toIso8601String(),
+        'user_id': user.id, 'email': user.email, 'full_name': fullName,
+        'phone_number': phoneNumber, 'address': address, 'updated_at': DateTime.now().toIso8601String(),
       });
 
       if (!mounted) return;
-
-      // Check if address is outside Selangor
-      final bool isOutsideSelangor =
-          !address.toLowerCase().contains('selangor');
+      final bool isOutsideSelangor = !address.toLowerCase().contains('selangor');
 
       if (isOutsideSelangor) {
-        // Navigate to the Reminder Screen
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const ReminderScreen()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const ReminderScreen()));
       } else {
-        // Navigate to the Home Page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomePage()),
-        );
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePage()));
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving profile: $error')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppStrings.errorSavingProfile}$error')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -88,114 +70,61 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24, vertical: AppSizes.p20),
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SvgPicture.asset(
-                      'lib/asset/app_icon.svg',
-                      height: 180,
+                    SvgPicture.asset(AppConfig.appIconPath, height: 180),
+                    gapH30,
+                    Text(
+                      AppStrings.profileSetupTitle,
+                      // --- FIX HERE ---
+                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 30),
-                    const Text(
-                      'Customer Details',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                    gapH24,
                     TextFormField(
                       controller: _nameController,
-                      decoration: InputDecoration(
-                        hintText: 'Name',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your name';
-                        }
-                        return null;
-                      },
+                      decoration: const InputDecoration(hintText: AppStrings.hintName),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? AppStrings.errorEnterName : null,
                     ),
-                    const SizedBox(height: 16),
+                    gapH16,
                     TextFormField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        hintText: 'phone number',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your phone number';
-                        }
-                        if (value.trim().length < 10) {
-                          return 'Please enter a valid phone number';
-                        }
+                      decoration: const InputDecoration(hintText: AppStrings.hintPhone),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return AppStrings.errorEnterPhone;
+                        if (v.trim().length < 10) return AppStrings.errorValidPhone;
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
+                    gapH16,
                     TextFormField(
                       controller: _addressController,
-                      decoration: InputDecoration(
-                        hintText: 'Address',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your address';
-                        }
-                        return null;
-                      },
+                      decoration: const InputDecoration(hintText: AppStrings.hintAddress),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? AppStrings.errorEnterAddress : null,
                     ),
-                    const SizedBox(height: 32),
+                    gapH32,
                     Align(
                       alignment: Alignment.center,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _saveProfile,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFC86462),
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 12, horizontal: 60),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
                         child: _isLoading
                             ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
+                                width: 20, height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : const Text(
-                                'Next',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
+                            : const Text(AppStrings.next),
                       ),
                     ),
                   ],
