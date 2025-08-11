@@ -52,7 +52,10 @@ dependencies:
 
   intl: ^0.20.2
 
-  shared_preferences: ^2.2.3 
+  shared_preferences: ^2.2.3
+  
+  # Configuration management
+  flutter_dotenv: ^5.1.0 
 
 dev_dependencies:
   flutter_test:
@@ -84,6 +87,8 @@ flutter:
       - asset/measure_tape.png
       - asset/Width.png
       - asset/Height.png
+      - .env.development
+      - .env.production
 
 
 flutter_launcher_icons:

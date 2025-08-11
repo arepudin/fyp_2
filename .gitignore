@@ -44,3 +44,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 flutter.tar.xz
+
+# Environment files (keep templates but ignore local overrides)
+.env.local
+.env.*.local

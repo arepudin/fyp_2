@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../utils/measurement_utils.dart';
 import 'ai_measurement_screen.dart';
 import '../../services/measurement.dart';
+import '../../config/theme_config.dart';
 
 // --- MeasurementMethodSelectionScreen remains the same ---
 class MeasurementMethodSelectionScreen extends StatelessWidget {
@@ -13,8 +14,6 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
     super.key,
     this.onMeasurementsEntered,
   });
-
-  static const Color primaryRed = Color.fromARGB(255, 158, 19, 17);
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +90,7 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: isRecommended
-                ? Border.all(color: primaryRed, width: 2)
+                ? Border.all(color: ThemeConfig.primaryColor, width: 2)
                 : null,
           ),
           child: Row(
@@ -99,10 +98,10 @@ class MeasurementMethodSelectionScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: primaryRed.withOpacity(0.1),
+                  color: ThemeConfig.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, size: 32, color: primaryRed),
+                child: Icon(icon, size: 32, color: ThemeConfig.primaryColor),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -237,8 +236,6 @@ class _ManualMeasurementGuideScreenState
   int _currentPage = 0;
   MeasurementUnit _selectedUnit = MeasurementUnit.meters;
   bool _isSaving = false;
-
-  static const Color primaryRed = Color.fromARGB(255, 158, 19, 17);
 
   final List<MeasurementStep> _measurementSteps = [
     MeasurementStep(
@@ -483,7 +480,7 @@ class _ManualMeasurementGuideScreenState
                   right: index < _measurementSteps.length - 1 ? 4 : 0),
               decoration: BoxDecoration(
                 color:
-                    index <= _currentPage ? primaryRed : Colors.grey.shade300,
+                    index <= _currentPage ? ThemeConfig.primaryColor : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -533,14 +530,14 @@ class _ManualMeasurementGuideScreenState
         const SizedBox(height: 24),
         const Text('Tips:',
             style: TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold, color: primaryRed)),
+                fontSize: 18, fontWeight: FontWeight.bold, color: ThemeConfig.primaryColor)),
         const SizedBox(height: 12),
         ...step.tips.map((tip) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.check_circle, size: 22, color: primaryRed),
+                  const Icon(Icons.check_circle, size: 22, color: ThemeConfig.primaryColor),
                   const SizedBox(width: 12),
                   Expanded(
                       child: Text(tip,
@@ -591,7 +588,7 @@ class _ManualMeasurementGuideScreenState
                             contentPadding: EdgeInsets.zero,
                             value: MeasurementUnit.meters,
                             groupValue: _selectedUnit,
-                            activeColor: primaryRed,
+                            activeColor: ThemeConfig.primaryColor,
                             onChanged: (v) =>
                                 setState(() => _selectedUnit = v!))),
                     Expanded(
@@ -600,7 +597,7 @@ class _ManualMeasurementGuideScreenState
                             contentPadding: EdgeInsets.zero,
                             value: MeasurementUnit.inches,
                             groupValue: _selectedUnit,
-                            activeColor: primaryRed,
+                            activeColor: ThemeConfig.primaryColor,
                             onChanged: (v) =>
                                 setState(() => _selectedUnit = v!))),
                   ],
@@ -637,7 +634,7 @@ class _ManualMeasurementGuideScreenState
                   OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: primaryRed, width: 2)),
+                  borderSide: const BorderSide(color: ThemeConfig.primaryColor, width: 2)),
               enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(color: Colors.grey.shade400))),
@@ -674,8 +671,8 @@ class _ManualMeasurementGuideScreenState
               child: OutlinedButton(
                 onPressed: _previousPage,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: primaryRed,
-                  side: const BorderSide(color: primaryRed),
+                  foregroundColor: ThemeConfig.primaryColor,
+                  side: const BorderSide(color: ThemeConfig.primaryColor),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
@@ -691,7 +688,7 @@ class _ManualMeasurementGuideScreenState
                   ? (_isSaving ? null : _validateAndSubmit)
                   : _nextPage,
               style: ElevatedButton.styleFrom(
-                backgroundColor: primaryRed,
+                backgroundColor: ThemeConfig.primaryColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(

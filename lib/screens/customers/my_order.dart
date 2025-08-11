@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Add 'intl' package to pubspec.yaml for date formatting
 import '../../constants/supabase.dart';
+import '../../config/theme_config.dart';
 
 class MyOrdersScreen extends StatefulWidget {
   const MyOrdersScreen({super.key});
@@ -52,7 +53,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryRed = Color.fromARGB(255, 158, 19, 17);
+    const primaryRed = ThemeConfig.primaryColor;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),

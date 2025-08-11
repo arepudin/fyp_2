@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'customers/profile_setup.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../config/app_config.dart';
 
 class GoogleSignInScreen extends StatefulWidget {
   const GoogleSignInScreen({super.key});
@@ -137,7 +138,7 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
             children: [
               // App Logo
               SvgPicture.asset(
-                'lib/asset/app_icon.svg',
+                AppConfig.appIconPath,
                 height: 300,
                 width: 300,
                 fit: BoxFit.contain,
@@ -145,10 +146,10 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
               const SizedBox(height: 20),
 
               // Welcome Title
-              const Text(
-                'Welcome to Tailormate',
+              Text(
+                'Welcome to ${AppConfig.appName}',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,

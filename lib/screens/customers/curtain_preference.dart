@@ -1,4 +1,5 @@
 // lib/screens/curtain_preference_screen.dart
+import '../../config/theme_config.dart';
 
 import 'package:flutter/material.dart';
 import '../../models/curtain_model.dart';
@@ -265,7 +266,7 @@ class _CurtainPreferenceScreenState extends State<CurtainPreferenceScreen> {
             ElevatedButton(
               onPressed: _isLoading ? null : _findMyCurtains,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 158, 19, 17),
+                backgroundColor: const ThemeConfig.primaryColor,
                 minimumSize: const Size(double.infinity, 55),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
               ),
@@ -347,7 +348,7 @@ class _PreferenceSelector extends StatelessWidget {
           divisions: 20,
           label: '${(weight * 100).round()}%',
           onChanged: onWeightChanged,
-          activeColor: const Color.fromARGB(255, 158, 19, 17),
+          activeColor: const ThemeConfig.primaryColor,
         ),
         
         const SizedBox(height: 4),
@@ -363,9 +364,9 @@ class _PreferenceSelector extends StatelessWidget {
                   margin: const EdgeInsets.only(right: 12),
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color.fromARGB(255, 158, 19, 17) : Colors.white,
+                    color: isSelected ? const ThemeConfig.primaryColor : Colors.white,
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: isSelected ? const Color.fromARGB(255, 158, 19, 17) : Colors.grey.shade300, width: 1.5),
+                    border: Border.all(color: isSelected ? const ThemeConfig.primaryColor : Colors.grey.shade300, width: 1.5),
                   ),
                   child: Text(option, style: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontWeight: FontWeight.w500)),
                 ),

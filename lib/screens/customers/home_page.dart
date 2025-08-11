@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../config/theme_config.dart';
 import 'package:fyp_2/screens/customers/measurement_guide_screen.dart';
 import '../../constants/supabase.dart';
 import '../sign_in.dart';
@@ -19,7 +20,7 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = true;
 
   // Define the theme color for easy reuse
-  static const Color primaryRed = Color.fromARGB(255, 158, 19, 17);
+  static const Color primaryRed = ThemeConfig.primaryColor;
 
   @override
   void initState() {

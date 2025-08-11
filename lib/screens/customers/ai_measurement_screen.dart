@@ -9,6 +9,7 @@ import '../../models/measurement_models.dart';
 import '../../services/measurement.dart';
 import '../../utils/measurement_utils.dart';
 import 'ai_measurement_steps.dart';
+import '../../config/theme_config.dart';
 
 class AIMeasurementScreen extends StatefulWidget {
   final Function(double width, double height)? onMeasurementsEntered;
@@ -108,7 +109,7 @@ class _AIMeasurementScreenState extends State<AIMeasurementScreen> {
   // (build, _showSuccessDialog, _showErrorDialog, navigation, etc.)
   @override
   Widget build(BuildContext context) {
-    const Color primaryRed = Color.fromARGB(255, 158, 19, 17);
+    const Color primaryRed = ThemeConfig.primaryColor;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),
