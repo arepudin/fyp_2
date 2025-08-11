@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../config/app_config.dart';
+import '../../config/theme_config.dart';
 // You might need this package to launch URLs/phone/email if you add interactivity later
 // import 'package:url_launcher/url_launcher.dart';
 
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
-
-  // Use the same theme color from your home page
-  static const Color primaryRed = Color.fromARGB(255, 158, 19, 17);
 
   @override
   Widget build(BuildContext context) {
@@ -38,13 +37,13 @@ class SupportScreen extends StatelessWidget {
                     _buildInfoRow(
                       icon: Icons.phone_outlined,
                       label: 'Phone Support',
-                      value: '+60 11-1161 1627',
+                      value: AppConfig.supportPhone,
                     ),
                     const Divider(height: 1),
                     _buildInfoRow(
                       icon: Icons.email_outlined,
                       label: 'Email Support',
-                      value: 'sabacurtain@gmail.com',
+                      value: AppConfig.companyEmail,
                     ),
                   ],
                 ),
@@ -92,7 +91,7 @@ class SupportScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16.0),
       child: Row(
         children: [
-          Icon(icon, color: primaryRed, size: 24),
+          Icon(icon, color: ThemeConfig.primaryColor, size: 24),
           const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,

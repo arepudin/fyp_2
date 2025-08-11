@@ -1,4 +1,5 @@
 // lib/screens/customers/widgets/ai_measurement_steps.dart
+import '../../config/theme_config.dart';
 
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -8,7 +9,7 @@ import '../../../models/measurement_models.dart'; // Ensure this path is correct
 import '../../../utils/measurement_utils.dart'; // Import for MeasurementUnit and utils
 import 'measurement_painters.dart'; // Ensure this path is correct
 
-const Color primaryRed = Color.fromARGB(255, 158, 19, 17);
+const Color primaryRed = ThemeConfig.primaryColor;
 
 // --- STEP 1: REFERENCE SELECTION ---
 class ReferenceSelectionStep extends StatelessWidget {

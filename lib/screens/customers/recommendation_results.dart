@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../config/theme_config.dart';
 import '../../models/curtain_model.dart';
 import '../../models/recommendation_model.dart';
 import '../../services/measurement.dart'; // Import measurement service
@@ -264,7 +265,7 @@ class _ConfirmOrderDialogState extends State<_ConfirmOrderDialog> {
         ),
         ElevatedButton(
           onPressed: _navigateToMeasurementGuide,
-          style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 158, 19, 17)),
+          style: ElevatedButton.styleFrom(backgroundColor: const ThemeConfig.primaryColor),
           child: const Text('Add Measurement', style: TextStyle(color: Colors.white)),
         ),
       ];
@@ -300,7 +301,7 @@ class _ConfirmOrderDialogState extends State<_ConfirmOrderDialog> {
                   }
                 }
               },
-        style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 158, 19, 17)),
+        style: ElevatedButton.styleFrom(backgroundColor: const ThemeConfig.primaryColor),
         child: _isPlacingOrder
             ? const SizedBox(
                 width: 20,
@@ -349,7 +350,7 @@ class _RecommendationCard extends StatelessWidget {
       UserInteractionService.trackView(recommendation.curtain.id);
     });
 
-    const primaryRed = Color.fromARGB(255, 158, 19, 17);
+    const primaryRed = ThemeConfig.primaryColor;
 
     final curtain = recommendation.curtain;
     final displayScore = recommendation.displayScore;

@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../sign_in.dart';
+import '../../config/app_config.dart';
+import '../../config/theme_config.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -26,7 +28,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'description': 'Step 2: Explore our curated collection and find the best curtains for you.'
     },
     {
-      'image': 'asset/SABA CURTAIN LOGO.jpg',
+      'image': AppConfig.companyLogoPath,
       'title': 'Place Your Order',
       'description': 'Step 3: A few simple clicks to bring beautiful design into your home.'
     },
@@ -47,7 +49,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryRed = Color.fromARGB(255, 158, 19, 17);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -81,10 +82,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             // Indicator
-            _buildScrollIndicator(primaryRed),
+            _buildScrollIndicator(ThemeConfig.primaryColor),
             const SizedBox(height: 20),
             // Navigation Buttons
-            _buildNavigationButtons(primaryRed),
+            _buildNavigationButtons(ThemeConfig.primaryColor),
             const SizedBox(height: 40),
           ],
         ),

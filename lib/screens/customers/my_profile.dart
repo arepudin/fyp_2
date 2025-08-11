@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../config/theme_config.dart';
 
 class MyProfilePage extends StatelessWidget {
   final Map<String, dynamic> userProfile;
@@ -9,7 +10,7 @@ class MyProfilePage extends StatelessWidget {
   });
 
   // Re-using the primary color for consistency
-  static const Color primaryRed = Color.fromARGB(255, 158, 19, 17);
+  static const Color primaryRed = ThemeConfig.primaryColor;
 
   @override
   Widget build(BuildContext context) {
